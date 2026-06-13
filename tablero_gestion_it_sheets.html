@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero de Gestión — Dirección de IT</title>
+<style>
+:root{
+  --bg:#fafafa;
+  --card:#ffffff;
+  --border:#e2e2e2;
+  --border-strong:#c6c6c6;
+  --text:#1a1a1a;
+  --text-secondary:#717171;
+  --text-tertiary:#aaaaaa;
+}
+*{box-sizing:border-box; font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;}
+body{margin:0; background:var(--bg); color:var(--text);}
+.wrap{max-width:1280px; margin:0 auto; padding:28px;}
+
+header.top{display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; border-bottom:1px solid var(--border-strong); padding-bottom:16px; margin-bottom:18px;}
+header.top h1{margin:0; font-size:19px; font-weight:600; letter-spacing:-0.01em;}
+header.top p{margin:4px 0 0; font-size:13px; color:var(--text-secondary);}
+.meta{font-size:12px; color:var(--text-secondary); text-align:right;}
+.save-status{font-size:11px; color:var(--text); margin-top:4px; min-height:14px;}
+.reset-btn{margin-top:8px; font-size:11px; padding:4px 10px; border:1px solid var(--border-strong); background:transparent; color:var(--text-secondary); cursor:pointer;}
+.reset-btn:hover{background:var(--text); color:#fff; border-color:var(--text);}
+
+.hint{font-size:12px; color:var(--text-tertiary); margin:0 2px 18px;}
+
+.kpi-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:14px;}
+.kpi-card{background:var(--card); border:1px solid var(--border); padding:14px 16px;}
+.kpi-card .label{font-size:11px; color:var(--text-secondary); margin:0 0 6px; text-transform:uppercase; letter-spacing:.05em;}
+.kpi-card .value{font-size:24px; font-weight:600; margin:0;}
+
+.pillar-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:22px;}
+.pillar-card{background:var(--card); border:1px solid var(--border); padding:10px 14px;}
+.pillar-card .name{font-size:11px; color:var(--text-secondary); margin:0 0 4px; line-height:1.35;}
+.pillar-card .count{font-size:20px; font-weight:600;}
+
+section.card{background:var(--card); border:1px solid var(--border); padding:18px 20px; margin-bottom:20px;}
+section.card h2{margin:0 0 14px; font-size:14px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--text);}
+
+.table-scroll{overflow-x:auto;}
+table{width:100%; border-collapse:collapse; table-layout:fixed; min-width:680px;}
+th{font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-secondary); text-align:left; padding:8px 6px; border-bottom:1px solid var(--border-strong); font-weight:500;}
+td{padding:8px 6px; border-bottom:1px solid var(--border); vertical-align:middle; overflow:hidden;}
+input[type=text], input[type=date], select{width:100%; min-width:0; border:none; border-bottom:1px solid transparent; background:transparent; padding:4px 2px; font-size:12.5px; color:var(--text); border-radius:0; text-overflow:ellipsis;}
+input[type=text]:hover, input[type=date]:hover, select:hover{border-bottom-color:var(--border-strong);}
+input[type=text]:focus, input[type=date]:focus, select:focus{outline:none; border-bottom-color:var(--text);}
+.col-actions{width:32px; text-align:center;}
+.priority-cell{display:flex; align-items:center; gap:6px; min-width:0;}
+.priority-num{font-weight:600; width:16px; text-align:center; flex-shrink:0;}
+.priority-controls{display:flex; flex-direction:column; gap:1px; flex-shrink:0;}
+.priority-controls button{border:1px solid var(--border-strong); background:transparent; color:var(--text-secondary); font-size:9px; line-height:1; padding:1px 4px; cursor:pointer;}
+.priority-controls button:hover{background:var(--text); color:#fff; border-color:var(--text);}
+.priority-controls button:disabled{opacity:.3; cursor:default;}
+.priority-controls button:disabled:hover{background:transparent; color:var(--text-secondary);}
+
+.status-cell{display:flex; align-items:center; gap:8px; min-width:0;}
+.status-cell select{flex:1; min-width:0;}
+.ind{display:inline-block; width:10px; height:10px; flex-shrink:0; text-align:center; line-height:9px; font-size:9px; font-weight:700; color:var(--text);}
+.ind-empty{border:1.5px solid var(--text-secondary); border-radius:50%;}
+.ind-filled{background:var(--text); border-radius:50%;}
+.ind-half{border:1.5px solid var(--text-secondary); border-radius:50%; background:linear-gradient(135deg, var(--text) 50%, transparent 50%);}
+.ind-block{background:var(--text); border-radius:1px;}
+.ind-check{border:1px solid var(--text); border-radius:50%;}
+.ind-dashed{border:1.5px dashed var(--text-tertiary); border-radius:50%;}
+
+.btn{border:1px solid var(--border-strong); background:transparent; color:var(--text); padding:6px 14px; font-size:12px; letter-spacing:.03em; cursor:pointer; border-radius:0;}
+.btn:hover{background:var(--text); color:#fff; border-color:var(--text);}
+.btn-link{border:none; background:none; color:var(--text-tertiary); cursor:pointer; font-size:14px; padding:4px; line-height:1;}
+.btn-link:hover{color:var(--text);}
+.btn-add{margin-top:10px;}
+
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+@media (max-width:760px){.two-col{grid-template-columns:1fr;}}
+
+.list-item{display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border);}
+.list-item:last-of-type{border-bottom:none;}
+.list-item input[type=checkbox]{flex-shrink:0; accent-color:var(--text);}
+.list-item input[type=text]{flex:1; border-bottom:none;}
+.list-item input[type=text]:hover, .list-item input[type=text]:focus{border-bottom:1px solid var(--border-strong);}
+.list-item.done input[type=text]{text-decoration:line-through; color:var(--text-tertiary);}
+
+.legend{display:flex; flex-wrap:wrap; gap:18px;}
+.legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary);}
+.footnote{font-size:11px; color:var(--text-tertiary); margin-top:12px;}
+
+#summaryText{width:100%; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; line-height:1.5; border:1px solid var(--border); padding:10px; resize:vertical; background:#fcfcfc; color:var(--text);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <h1>Tablero de gestión — Dirección de IT</h1>
+      <p>Portfolio de proyectos y temas prioritarios del Grupo</p>
+    </div>
+    <div class="meta">
+      <div>Última actualización: <span id="updatedAt">—</span></div>
+      <div class="save-status" id="saveStatus"></div>
+      <button class="reset-btn" id="resetBtn">Restablecer plantilla</button>
+    </div>
+  </header>
+
+  <p class="hint">Datos de prototipo para revisión de UX. Todos los campos son editables y se guardan automáticamente.</p>
+
+  <div class="kpi-row" id="kpiRow"></div>
+  <div class="pillar-row" id="pillarRow"></div>
+
+  <section class="card">
+    <h2>Portfolio de proyectos</h2>
+    <table>
+    <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:7%">Prioridad</th>
+          <th style="width:16%">Proyecto</th>
+          <th style="width:16%">Pilar</th>
+          <th style="width:15%">Estado</th>
+          <th style="width:10%">Responsable</th>
+          <th style="width:20%">Foco actual / próximo hito</th>
+          <th style="width:10%">Fecha hito</th>
+          <th class="col-actions"></th>
+        </tr>
+      </thead>
+      <tbody id="projectsBody"></tbody>
+    </table>
+    </div>
+    <button class="btn btn-add" id="addProject">+ Agregar proyecto</button>
+  </section>
+
+  <div class="two-col">
+    <section class="card">
+      <h2>Temas prioritarios en curso</h2>
+      <div id="topicsList"></div>
+      <button class="btn btn-add" id="addTopic">+ Agregar tema</button>
+    </section>
+    <section class="card">
+      <h2>Pendientes de decisión — Dirección</h2>
+      <div id="decisionsList"></div>
+      <button class="btn btn-add" id="addDecision">+ Agregar pendiente</button>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Resumen para copiar</h2>
+    <button class="btn" id="generateSummaryBtn">Generar resumen</button>
+    <textarea id="summaryText" rows="13" readonly style="display:none; margin-top:12px;"></textarea>
+  </section>
+
+  <section class="card">
+    <h2>Referencias de estado</h2>
+    <div class="legend" id="legend"></div>
+    <p class="footnote">Los datos de este tablero se guardan en este artifact y persisten entre sesiones. "Restablecer plantilla" reemplaza todo por los valores iniciales.</p>
+  </section>
+
+</div>
+
+<script>
+// ============================================================
+// CONFIGURACION: pegar aqui la URL del Web App de Apps Script
+// (Implementar -> Nueva implementacion -> Aplicacion web -> URL)
+// ============================================================
+const API_URL = 'https://script.google.com/macros/s/AKfycbzwiGlfB9vs74J9V-F4VNy2dNPeoS4kL9htHREiaVxas37rj8HJB3H9S7gHt46yZQ2v/exec';
+
+const PILLARS = {
+  p1: 'P1 · Infraestructura y seguridad',
+  p2: 'P2 · Sistemas y datos',
+  p3: 'P3 · Automatización e IA',
+  p4: 'P4 · Innovación y transformación',
+  na: 'Sin asignar'
+};
+
+const STATUSES = {
+  'a-definir': {label:'A definir', ind:'ind-empty'},
+  'en-curso': {label:'En curso', ind:'ind-filled'},
+  'atencion': {label:'En ajuste / Atención', ind:'ind-half'},
+  'bloqueado': {label:'Bloqueado', ind:'ind-block'},
+  'completado': {label:'Completado', ind:'ind-check'},
+  'pendiente': {label:'Pendiente definición', ind:'ind-dashed'}
+};
+
+function normalizeProject(p){
+  return {
+    id: String(p.id || ('p'+Date.now()+Math.floor(Math.random()*1000))),
+    name: p.name || '',
+    pillar: PILLARS[p.pillar] ? p.pillar : 'na',
+    status: STATUSES[p.status] ? p.status : 'a-definir',
+    owner: p.owner || '',
+    focus: p.focus || '',
+    milestone: p.milestone || ''
+  };
+}
+
+function normalizeItem(prefix){
+  return function(it){
+    return {
+      id: String(it.id || (prefix+Date.now()+Math.floor(Math.random()*1000))),
+      text: it.text || '',
+      done: it.done===true || it.done==='TRUE' || it.done==='true'
+    };
+  };
+}
+
+let data = null;
+
+function defaultData(){
+  return {
+    projects: [
+      {id:'p01', name:'PMS Hoteles', pillar:'p2', status:'en-curso', owner:'Equipo Sistemas', focus:'Definir alcance funcional con Hotelería', milestone:'2026-07-10'},
+      {id:'p02', name:'Flota PVP', pillar:'p2', status:'a-definir', owner:'', focus:'Relevar sistema de gestión actual (LAX)', milestone:''},
+      {id:'p03', name:'Integración POS (Hiopos)', pillar:'p2', status:'en-curso', owner:'Equipo Sistemas', focus:'Pruebas de integración con ERP', milestone:'2026-06-30'},
+      {id:'p04', name:'BI corporativo (Power BI)', pillar:'p2', status:'atencion', owner:'Equipo Datos', focus:'Definir modelo de datos para tableros', milestone:'2026-07-20'},
+      {id:'p05', name:'Rollout Finnegans (ERP)', pillar:'p2', status:'atencion', owner:'Equipo Sistemas', focus:'Ajuste post-implementación', milestone:'2026-06-25'},
+      {id:'p06', name:'Separación lógica de red', pillar:'p1', status:'bloqueado', owner:'Proveedor infraestructura', focus:'Pendiente aprobación de presupuesto', milestone:''},
+      {id:'p07', name:'Presupuesto unificado de IT', pillar:'p1', status:'en-curso', owner:'Dirección IT', focus:'Consolidar costos por empresa', milestone:'2026-06-20'},
+      {id:'p08', name:'Selección proveedor soporte L1/L2', pillar:'p1', status:'a-definir', owner:'', focus:'Definir pliego de requerimientos', milestone:''},
+      {id:'p09', name:'P09 · A identificar', pillar:'na', status:'pendiente', owner:'', focus:'Definir alcance', milestone:''},
+      {id:'p10', name:'P10 · A identificar', pillar:'na', status:'pendiente', owner:'', focus:'Definir alcance', milestone:''}
+    ],
+    topics: [
+      {id:'t1', text:'Reunión con proveedor Transbox (infraestructura)', done:true},
+      {id:'t2', text:'Aprobación de volúmenes de equipamiento (notebooks, PCs, monitores, wifi, servidores, cámaras)', done:false},
+      {id:'t3', text:'Revisión de licencias de Google Workspace', done:true},
+      {id:'t4', text:'Proceso licitatorio 100% en Bitrix con datos explotables', done:false},
+      {id:'t5', text:'Seguridad de activos físicos / control de accesos', done:false},
+      {id:'t6', text:'Quick wins transversales identificados', done:false},
+      {id:'t7', text:'Diagnóstico de gasto en IT y armado de presupuesto', done:false}
+    ],
+    decisions: [
+      {id:'d1', text:'Validar priorización del backlog (10 proyectos)', done:true},
+      {id:'d2', text:'Aprobar incorporación: IT Business Automation Lead', done:false},
+      {id:'d3', text:'Aprobar compras de equipamiento (volúmenes grandes)', done:false},
+      {id:'d4', text:'Definir alcance de P09 y P10', done:false},
+      {id:'d5', text:'Presupuesto IT consolidado (Run / Grow / Transform)', done:false}
+    ],
+    meta: {updatedAt: new Date().toISOString()}
+  };
+}
+
+function escapeAttr(str){
+  return String(str==null?'':str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function fmtDate(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString('es-AR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+}
+
+function fmtDateOnly(isoDate){
+  if(!isoDate) return 'sin fecha';
+  const parts = isoDate.split('-');
+  if(parts.length!==3) return isoDate;
+  return parts[2]+'/'+parts[1]+'/'+parts[0];
+}
+
+function indHTML(statusKey){
+  const ind = STATUSES[statusKey] ? STATUSES[statusKey].ind : 'ind-empty';
+  const content = ind==='ind-check' ? '\u2713' : '';
+  return '<span class="ind '+ind+'" data-ind>'+content+'</span>';
+}
+
+function setSaveStatus(msg){
+  const el = document.getElementById('saveStatus');
+  el.textContent = msg;
+  setTimeout(function(){ if(el.textContent===msg) el.textContent=''; }, 2500);
+}
+
+function renderTimestamp(){
+  document.getElementById('updatedAt').textContent = fmtDate(data.meta.updatedAt);
+}
+
+function renderKPIs(){
+  const total = data.projects.length;
+  const counts = {};
+  data.projects.forEach(function(p){ counts[p.status] = (counts[p.status]||0)+1; });
+  const topicsActive = data.topics.filter(function(t){return !t.done;}).length;
+  const decisionsPending = data.decisions.filter(function(d){return !d.done;}).length;
+  const sinDefinir = (counts['a-definir']||0) + (counts['pendiente']||0);
+
+  document.getElementById('kpiRow').innerHTML =
+    '<div class="kpi-card"><p class="label">Proyectos en portfolio</p><p class="value">'+total+'</p></div>'+
+    '<div class="kpi-card"><p class="label">Temas activos</p><p class="value">'+topicsActive+' / '+data.topics.length+'</p></div>'+
+    '<div class="kpi-card"><p class="label">Decisiones pendientes</p><p class="value">'+decisionsPending+' / '+data.decisions.length+'</p></div>'+
+    '<div class="kpi-card"><p class="label">Estados sin definir</p><p class="value">'+sinDefinir+' / '+total+'</p></div>';
+}
+
+function renderPillars(){
+  const order = ['p1','p2','p3','p4','na'];
+  const counts = {p1:0,p2:0,p3:0,p4:0,na:0};
+  data.projects.forEach(function(p){ counts[p.pillar] = (counts[p.pillar]||0)+1; });
+  document.getElementById('pillarRow').innerHTML = order.map(function(k){
+    return '<div class="pillar-card"><p class="name">'+PILLARS[k]+'</p><p class="count">'+counts[k]+'</p></div>';
+  }).join('');
+}
+
+function selectPillarHTML(current){
+  const opts = Object.keys(PILLARS).map(function(k){
+    return '<option value="'+k+'" '+(k===current?'selected':'')+'>'+PILLARS[k]+'</option>';
+  }).join('');
+  return '<select data-field="pillar">'+opts+'</select>';
+}
+
+function selectStatusHTML(current){
+  const opts = Object.keys(STATUSES).map(function(k){
+    return '<option value="'+k+'" '+(k===current?'selected':'')+'>'+STATUSES[k].label+'</option>';
+  }).join('');
+  return '<div class="status-cell">'+indHTML(current)+'<select data-field="status">'+opts+'</select></div>';
+}
+
+function renderProjects(){
+  const body = document.getElementById('projectsBody');
+  const total = data.projects.length;
+  body.innerHTML = data.projects.map(function(p, idx){
+    return '<tr data-id="'+p.id+'">'+
+      '<td><div class="priority-cell"><span class="priority-num">'+(idx+1)+'</span>'+
+        '<div class="priority-controls">'+
+          '<button data-action="move-up" '+(idx===0?'disabled':'')+' aria-label="Subir prioridad">\u25B2</button>'+
+          '<button data-action="move-down" '+(idx===total-1?'disabled':'')+' aria-label="Bajar prioridad">\u25BC</button>'+
+        '</div></div></td>'+
+      '<td><input type="text" data-field="name" value="'+escapeAttr(p.name)+'"></td>'+
+      '<td>'+selectPillarHTML(p.pillar)+'</td>'+
+      '<td>'+selectStatusHTML(p.status)+'</td>'+
+      '<td><input type="text" data-field="owner" value="'+escapeAttr(p.owner)+'" placeholder="—"></td>'+
+      '<td><input type="text" data-field="focus" value="'+escapeAttr(p.focus)+'"></td>'+
+      '<td><input type="date" data-field="milestone" value="'+escapeAttr(p.milestone)+'"></td>'+
+      '<td class="col-actions"><button class="btn-link" data-action="delete-project" aria-label="Eliminar proyecto">&times;</button></td>'+
+    '</tr>';
+  }).join('');
+
+  body.querySelectorAll('input, select').forEach(function(el){
+    el.addEventListener('change', onProjectFieldChange);
+  });
+  body.querySelectorAll('[data-action="delete-project"]').forEach(function(btn){
+    btn.addEventListener('click', onDeleteProject);
+  });
+  body.querySelectorAll('[data-action="move-up"]').forEach(function(btn){
+    btn.addEventListener('click', function(e){ onMoveProject(e, -1); });
+  });
+  body.querySelectorAll('[data-action="move-down"]').forEach(function(btn){
+    btn.addEventListener('click', function(e){ onMoveProject(e, 1); });
+  });
+}
+
+function onMoveProject(e, dir){
+  const tr = e.target.closest('tr');
+  const id = tr.getAttribute('data-id');
+  const idx = data.projects.findIndex(function(p){ return p.id===id; });
+  const newIdx = idx + dir;
+  if(newIdx < 0 || newIdx >= data.projects.length) return;
+  const tmp = data.projects[idx];
+  data.projects[idx] = data.projects[newIdx];
+  data.projects[newIdx] = tmp;
+  renderProjects();
+  persist();
+}
+
+function onProjectFieldChange(e){
+  const tr = e.target.closest('tr');
+  const id = tr.getAttribute('data-id');
+  const field = e.target.getAttribute('data-field');
+  const proj = data.projects.find(function(p){ return p.id===id; });
+  proj[field] = e.target.value;
+  if(field==='status'){
+    const ind = STATUSES[proj.status].ind;
+    const indEl = e.target.closest('.status-cell').querySelector('.ind');
+    indEl.className = 'ind ' + ind;
+    indEl.textContent = ind==='ind-check' ? '\u2713' : '';
+  }
+  if(field==='pillar'){
+    renderPillars();
+  }
+  persist();
+}
+
+function onDeleteProject(e){
+  const tr = e.target.closest('tr');
+  const id = tr.getAttribute('data-id');
+  data.projects = data.projects.filter(function(p){ return p.id!==id; });
+  renderProjects();
+  renderPillars();
+  persist();
+}
+
+function renderListSection(containerId, key){
+  const el = document.getElementById(containerId);
+  el.innerHTML = data[key].map(function(item){
+    return '<div class="list-item '+(item.done?'done':'')+'" data-id="'+item.id+'">'+
+      '<input type="checkbox" data-field="done" '+(item.done?'checked':'')+'>'+
+      '<input type="text" data-field="text" value="'+escapeAttr(item.text)+'">'+
+      '<button class="btn-link" data-action="delete" aria-label="Eliminar item">&times;</button>'+
+    '</div>';
+  }).join('');
+
+  el.querySelectorAll('input').forEach(function(inp){
+    inp.addEventListener('change', function(e){ onListChange(e, key); });
+  });
+  el.querySelectorAll('[data-action="delete"]').forEach(function(btn){
+    btn.addEventListener('click', function(e){ onListDelete(e, key); });
+  });
+}
+
+function onListChange(e, key){
+  const item = e.target.closest('.list-item');
+  const id = item.getAttribute('data-id');
+  const obj = data[key].find(function(x){ return x.id===id; });
+  const field = e.target.getAttribute('data-field');
+  if(field==='done'){
+    obj.done = e.target.checked;
+    item.classList.toggle('done', obj.done);
+  } else {
+    obj.text = e.target.value;
+  }
+  persist();
+}
+
+function onListDelete(e, key){
+  const item = e.target.closest('.list-item');
+  const id = item.getAttribute('data-id');
+  data[key] = data[key].filter(function(x){ return x.id!==id; });
+  if(key==='topics'){ renderListSection('topicsList','topics'); } else { renderListSection('decisionsList','decisions'); }
+  persist();
+}
+
+function renderLegend(){
+  document.getElementById('legend').innerHTML = Object.keys(STATUSES).map(function(k){
+    return '<span class="legend-item">'+indHTML(k)+STATUSES[k].label+'</span>';
+  }).join('');
+}
+
+function generateSummary(){
+  const lines = [];
+  lines.push('TABLERO DE GESTION IT - ' + fmtDate(data.meta.updatedAt));
+  lines.push('');
+  lines.push('PROYECTOS EN PORTFOLIO (' + data.projects.length + ')');
+  data.projects.forEach(function(p, idx){
+    lines.push('- [Prioridad ' + (idx+1) + '] ' + p.name + ' [' + PILLARS[p.pillar] + ']');
+    lines.push('    Estado: ' + STATUSES[p.status].label + ' | Responsable: ' + (p.owner||'sin asignar') + ' | Proximo hito: ' + fmtDateOnly(p.milestone));
+    lines.push('    Foco: ' + (p.focus||'-'));
+  });
+  lines.push('');
+  const topicsActive = data.topics.filter(function(t){return !t.done;});
+  lines.push('TEMAS PRIORITARIOS EN CURSO (' + topicsActive.length + ' activos de ' + data.topics.length + ')');
+  data.topics.forEach(function(t){
+    lines.push('- [' + (t.done?'Resuelto':'En curso') + '] ' + t.text);
+  });
+  lines.push('');
+  const decPending = data.decisions.filter(function(d){return !d.done;});
+  lines.push('PENDIENTES DE DECISION - DIRECCION (' + decPending.length + ' pendientes de ' + data.decisions.length + ')');
+  data.decisions.forEach(function(d){
+    lines.push('- [' + (d.done?'Resuelto':'Pendiente') + '] ' + d.text);
+  });
+  return lines.join('\n');
+}
+
+function copySummary(){
+  const ta = document.getElementById('summaryText');
+  ta.focus();
+  ta.select();
+  let copied = false;
+  try{ copied = document.execCommand('copy'); }catch(e){ copied = false; }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ta.value).then(function(){
+      setSaveStatus('Resumen copiado al portapapeles');
+    }).catch(function(){
+      setSaveStatus(copied?'Resumen copiado al portapapeles':'Seleccionado: usa Ctrl+C para copiar');
+    });
+  } else {
+    setSaveStatus(copied?'Resumen copiado al portapapeles':'Seleccionado: usa Ctrl+C para copiar');
+  }
+}
+
+async function saveToSheet(){
+  data.meta.updatedAt = new Date().toISOString();
+  try{
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(data)
+    });
+    return true;
+  }catch(err){
+    return false;
+  }
+}
+
+async function persist(){
+  renderKPIs();
+  const ok = await saveToSheet();
+  renderTimestamp();
+  setSaveStatus(ok ? 'Cambios guardados en Google Sheets' : 'No se pudo guardar en Google Sheets');
+}
+
+document.getElementById('addProject').addEventListener('click', function(){
+  data.projects.push({id:'p'+Date.now(), name:'Nuevo proyecto', pillar:'na', status:'a-definir', owner:'', focus:'', milestone:''});
+  renderProjects();
+  renderPillars();
+  persist();
+});
+
+document.getElementById('addTopic').addEventListener('click', function(){
+  data.topics.push({id:'t'+Date.now(), text:'Nuevo tema', done:false});
+  renderListSection('topicsList','topics');
+  persist();
+});
+
+document.getElementById('addDecision').addEventListener('click', function(){
+  data.decisions.push({id:'d'+Date.now(), text:'Nuevo pendiente', done:false});
+  renderListSection('decisionsList','decisions');
+  persist();
+});
+
+document.getElementById('generateSummaryBtn').addEventListener('click', function(){
+  const ta = document.getElementById('summaryText');
+  ta.value = generateSummary();
+  ta.style.display = 'block';
+  copySummary();
+});
+
+document.getElementById('resetBtn').addEventListener('click', function(){
+  if(confirm('Esto reemplaza todos los datos actuales por la plantilla inicial. Confirmas?')){
+    data = defaultData();
+    renderAll();
+    persist();
+  }
+});
+
+function renderAll(){
+  renderLegend();
+  renderProjects();
+  renderListSection('topicsList','topics');
+  renderListSection('decisionsList','decisions');
+  renderKPIs();
+  renderPillars();
+  renderTimestamp();
+}
+
+async function init(){
+  try{
+    const res = await fetch(API_URL);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const json = await res.json();
+    if(json.projects && json.projects.length){
+      data = {
+        projects: json.projects.map(normalizeProject),
+        topics: (json.topics||[]).map(normalizeItem('t')),
+        decisions: (json.decisions||[]).map(normalizeItem('d')),
+        meta: {updatedAt: (json.meta && json.meta.updatedAt) || new Date().toISOString()}
+      };
+      setSaveStatus('Datos cargados desde Google Sheets');
+    } else {
+      data = defaultData();
+      setSaveStatus('Planilla vacia: cargando datos iniciales...');
+      await saveToSheet();
+      setSaveStatus('Datos iniciales cargados en Google Sheets');
+    }
+  }catch(e){
+    data = defaultData();
+    setSaveStatus('Sin conexion con Google Sheets (mostrando datos locales)');
+  }
+  renderAll();
+}
+
+init();
+</script>
+</body>
+</html>
