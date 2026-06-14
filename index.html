@@ -185,6 +185,8 @@ const STATUSES = {
 };
 
 function normalizeProject(p){
+  let ms = p.milestone || '';
+  if(ms && ms.length > 10) ms = ms.substring(0, 10);
   return {
     id: String(p.id || ('p'+Date.now()+Math.floor(Math.random()*1000))),
     name: p.name || '',
@@ -192,7 +194,7 @@ function normalizeProject(p){
     status: STATUSES[p.status] ? p.status : 'a-definir',
     owner: p.owner || '',
     focus: p.focus || '',
-    milestone: p.milestone || ''
+    milestone: ms
   };
 }
 
