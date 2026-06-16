@@ -583,11 +583,16 @@ function copySummary(){
 }
 
 async function saveToSheet(){
-  data.meta.updatedAt=new Date().toISOString();
+  data.meta.updatedAt = new Date().toISOString();
   try{
-    await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(data)});
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(data)
+    });
     return true;
-  }catch(e){return false;}
+  }catch(err){ return false; }
 }
 async function persist(){
   renderKPIs();
@@ -606,7 +611,7 @@ function renderAll(){
 
 async function init(){
   try{
-    const res=await fetch(API_URL);
+    const res = await fetch(API_URL, {redirect: 'follow'}););
     if(!res.ok) throw new Error('HTTP '+res.status);
     const json=await res.json();
     if(json.projects&&json.projects.length){
