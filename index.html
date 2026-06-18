@@ -299,11 +299,12 @@ body.present-mode input[data-field="progress"]{display:none;}
   </section>
 
   <!-- ══════════════════════════════════════════════════════════════════════
-       TCO — COSTOS DE LICENCIAS IT GRUPO
-       Fuente: Mapa Aplicativo 2026 v2 · TC BNA $1.465 · 18/06/2026
+       TCO — COSTOS DE LICENCIAS IT GRUPO  (datos desde Google Sheets)
        ══════════════════════════════════════════════════════════════════════ -->
   <section class="card" id="tcoSection">
-    <h2>TCO — Costos de licencias IT · Grupo <span class="tco-chip">v2 · jun-2026</span><span class="tco-chip">TC BNA $1.465</span><span class="tco-chip">7% incr. anual</span></h2>
+    <h2>TCO — Costos de licencias IT · Grupo
+      <span class="tco-chip" id="tcoChipVer">cargando…</span><span class="tco-chip" id="tcoChipTC"></span><span class="tco-chip">7% incr. anual</span>
+    </h2>
 
     <div class="tco-tabs">
       <button class="tco-tab active" data-panel="tco-resumen">Resumen</button>
@@ -311,77 +312,44 @@ body.present-mode input[data-field="progress"]{display:none;}
       <button class="tco-tab" data-panel="tco-3anios">Proyección 3 años</button>
     </div>
 
+    <div id="tcoLoading" style="padding:20px 0; text-align:center; font-size:12px; color:var(--text-secondary);">
+      Cargando datos desde Google Sheets…
+    </div>
+    <div id="tcoError" style="display:none; padding:10px 12px; font-size:11px; color:#c00; background:#fff5f5; border:1px solid #fcc; margin-bottom:12px;">
+      No se pudieron cargar los datos del TCO desde Google Sheets. Se muestran los últimos valores conocidos.
+    </div>
+
     <!-- ── PANEL 1: RESUMEN ─────────────────────────────────────────────── -->
-    <div class="tco-panel active" id="tco-resumen">
-      <div class="tco-kpi-row">
-        <div class="tco-kpi"><p class="lbl">Costo mensual grupo</p><p class="val">USD 50.989</p><p class="sub">Todas las plataformas</p></div>
-        <div class="tco-kpi"><p class="lbl">Costo anual 2026</p><p class="val">USD 611.862</p><p class="sub">Base sin incremento</p></div>
-        <div class="tco-kpi"><p class="lbl">TCO 3 años</p><p class="val">USD 1.967.076</p><p class="sub">Con 7% incremental anual</p></div>
-        <div class="tco-kpi"><p class="lbl">Plataformas</p><p class="val">7</p><p class="sub">10 empresas en Finnegans</p></div>
-        <div class="tco-kpi"><p class="lbl">Mayor costo</p><p class="val">51,4%</p><p class="sub">Finnegans sobre el total</p></div>
-      </div>
-
-      <div class="bar-wrap" style="margin-bottom:14px;">
-        <div class="bar-row"><span class="bar-lbl">Finnegans</span><div class="bar-outer"><div class="bar-inner" style="width:51.4%"></div></div><span class="bar-val">USD 26.235</span><span class="bar-pct">51,4%</span></div>
-        <div class="bar-row"><span class="bar-lbl">GWS</span><div class="bar-outer"><div class="bar-inner" style="width:23.8%"></div></div><span class="bar-val">USD 12.118</span><span class="bar-pct">23,8%</span></div>
-        <div class="bar-row"><span class="bar-lbl">Browix</span><div class="bar-outer"><div class="bar-inner" style="width:13.9%"></div></div><span class="bar-val">USD 7.076</span><span class="bar-pct">13,9%</span></div>
-        <div class="bar-row"><span class="bar-lbl">Bitrix24</span><div class="bar-outer"><div class="bar-inner" style="width:9.4%"></div></div><span class="bar-val">USD 4.790</span><span class="bar-pct">9,4%</span></div>
-        <div class="bar-row"><span class="bar-lbl">Resto</span><div class="bar-outer"><div class="bar-inner" style="width:1.5%"></div></div><span class="bar-val">USD 768</span><span class="bar-pct">1,5%</span></div>
-      </div>
-
-      <p class="tco-note">
-        ARS convertidos a USD al TC BNA venta $1.465 (18/06/2026). Google Workspace: facturación bimestral (USD 24.237 c/2 meses).
-        Fuente: Mapa Aplicativo 2026 v2. <strong>Consolidación La Mantovana S.A ejecutada en v2</strong> — ahorro USD 75.744/año materializado.
-      </p>
+    <div class="tco-panel active" id="tco-resumen" style="display:none;">
+      <div class="tco-kpi-row" id="tcoKpiRow"></div>
+      <div class="bar-wrap" id="tcoBarWrap" style="margin-bottom:14px;"></div>
+      <p class="tco-note" id="tcoNota"></p>
     </div>
 
     <!-- ── PANEL 2: POR PLATAFORMA ─────────────────────────────────────── -->
-    <div class="tco-panel" id="tco-plataformas">
+    <div class="tco-panel" id="tco-plataformas" style="display:none;">
       <div class="tco-table-wrap">
         <table class="tco-table">
           <thead>
             <tr>
               <th style="width:28%">Plataforma / Espacio</th>
               <th style="width:14%">Proveedor</th>
-              <th style="width:16%">Modelo</th>
-              <th style="width:10%">Moneda</th>
-              <th class="r" style="width:12%">USD/mes</th>
+              <th style="width:18%">Modelo</th>
+              <th style="width:8%">Moneda</th>
+              <th class="r" style="width:11%">USD/mes</th>
               <th class="r" style="width:12%">USD/año</th>
-              <th class="r" style="width:8%">% total</th>
+              <th class="r" style="width:9%">% total</th>
             </tr>
           </thead>
-          <tbody>
-            <tr class="grp-hdr"><td colspan="7">Finnegans ERP — por espacio de licenciamiento</td></tr>
-            <tr class="finn"><td>Espacio Servicio</td><td>Finnegans</td><td>SaaS multiempresa</td><td><span class="tco-badge">USD</span></td><td class="r">15.889</td><td class="r">190.664</td><td class="r">31,2%</td></tr>
-            <tr class="finn"><td>Espacio La Mantovana</td><td>Finnegans</td><td>SaaS multiempresa</td><td><span class="tco-badge">USD</span></td><td class="r">7.299</td><td class="r">87.588</td><td class="r">14,3%</td></tr>
-            <tr class="finn"><td>Espacio EsmeraldaPlus</td><td>Finnegans</td><td>SaaS multiempresa</td><td><span class="tco-badge">USD</span></td><td class="r">1.616</td><td class="r">19.392</td><td class="r">3,2%</td></tr>
-            <tr class="finn"><td>Espacio Banctotal</td><td>Finnegans</td><td>SaaS monoempresa</td><td><span class="tco-badge">USD</span></td><td class="r">1.431</td><td class="r">17.173</td><td class="r">2,8%</td></tr>
-            <tr class="subtotal"><td colspan="4"><strong>Subtotal Finnegans</strong></td><td class="r"><strong>26.235</strong></td><td class="r"><strong>314.820</strong></td><td class="r"><strong>51,4%</strong></td></tr>
-            <tr class="grp-hdr"><td colspan="7">Otras plataformas</td></tr>
-            <tr><td>Google Workspace</td><td>Esourcecapital</td><td>SaaS bimestral</td><td><span class="tco-badge">USD</span></td><td class="r">12.118 *</td><td class="r">145.421</td><td class="r">23,8%</td></tr>
-            <tr><td>Browix</td><td>—</td><td>SaaS por empleados</td><td><span class="tco-badge">ARS</span></td><td class="r">7.076</td><td class="r">84.915</td><td class="r">13,9%</td></tr>
-            <tr><td>Bitrix24</td><td>Alkem</td><td>SaaS Enterprise 250u</td><td><span class="tco-badge">USD</span></td><td class="r">4.790</td><td class="r">57.480</td><td class="r">9,4%</td></tr>
-            <tr><td>Arion Hospitality</td><td>Criterio Inf.</td><td>On-premise Mant. Gold</td><td><span class="tco-badge">ARS</span></td><td class="r">280</td><td class="r">3.366</td><td class="r">0,6%</td></tr>
-            <tr><td>SiteMinder Plus</td><td>SiteMinder</td><td>SaaS suscripción</td><td><span class="tco-badge">USD</span></td><td class="r">250</td><td class="r">2.994</td><td class="r">0,5%</td></tr>
-            <tr><td>Visionaris</td><td>Visionaris</td><td>SaaS paquete 10u</td><td><span class="tco-badge">ARS</span></td><td class="r">239</td><td class="r">2.868</td><td class="r">0,5%</td></tr>
-            <tr class="subtotal"><td colspan="4"><strong>Subtotal otras</strong></td><td class="r"><strong>24.753</strong></td><td class="r"><strong>297.044</strong></td><td class="r"><strong>48,6%</strong></td></tr>
-            <tr class="grand-total"><td colspan="4"><strong>TOTAL GRUPO</strong></td><td class="r"><strong>50.989</strong></td><td class="r"><strong>611.862</strong></td><td class="r"><strong>100%</strong></td></tr>
-          </tbody>
+          <tbody id="tcoTablaPlatBody"></tbody>
         </table>
       </div>
-      <p class="tco-note">* Google Workspace mostrado como mensual equivalente (pago real: USD 24.237 c/2 meses). ARS → USD al TC BNA $1.465.</p>
+      <p class="tco-note">* Google Workspace: pago real bimestral; mostrado como mensual equivalente. ARS → USD al TC BNA indicado en Google Sheets.</p>
     </div>
 
     <!-- ── PANEL 3: PROYECCIÓN 3 AÑOS ──────────────────────────────────── -->
-    <div class="tco-panel" id="tco-3anios">
-      <div class="tco-kpi-row" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); margin-bottom:20px;">
-        <div class="tco-kpi"><p class="lbl">Año 1 · 2026</p><p class="val" style="font-size:18px;">USD 611.862</p><p class="sub">Base</p></div>
-        <div class="tco-kpi"><p class="lbl">Año 2 · 2027</p><p class="val" style="font-size:18px;">USD 654.693</p><p class="sub">+7% sobre base</p></div>
-        <div class="tco-kpi"><p class="lbl">Año 3 · 2028</p><p class="val" style="font-size:18px;">USD 700.521</p><p class="sub">+14,49% sobre base</p></div>
-        <div class="tco-kpi"><p class="lbl">TCO Total 3 años</p><p class="val" style="font-size:18px;">USD 1.967.076</p><p class="sub">Suma de los 3 años</p></div>
-        <div class="tco-kpi"><p class="lbl">Costo extra por inflación vendor</p><p class="val" style="font-size:18px;">USD 131.550</p><p class="sub">vs. costo fijo 3 años</p></div>
-      </div>
-
+    <div class="tco-panel" id="tco-3anios" style="display:none;">
+      <div class="tco-kpi-row" id="tco3KpiRow" style="margin-bottom:20px;"></div>
       <div class="tco-table-wrap">
         <table class="tco-table">
           <thead>
@@ -394,28 +362,11 @@ body.present-mode input[data-field="progress"]{display:none;}
               <th class="r" style="width:13%">Total 3 años</th>
             </tr>
           </thead>
-          <tbody>
-            <tr class="grp-hdr"><td colspan="6">Finnegans ERP</td></tr>
-            <tr class="finn"><td>Espacio Servicio</td><td>SaaS multiempresa</td><td class="r">190.664</td><td class="r">204.010</td><td class="r">218.291</td><td class="r">612.965</td></tr>
-            <tr class="finn"><td>Espacio La Mantovana</td><td>SaaS multiempresa</td><td class="r">87.588</td><td class="r">93.719</td><td class="r">100.279</td><td class="r">281.586</td></tr>
-            <tr class="finn"><td>Espacio EsmeraldaPlus</td><td>SaaS multiempresa</td><td class="r">19.392</td><td class="r">20.750</td><td class="r">22.202</td><td class="r">62.344</td></tr>
-            <tr class="finn"><td>Espacio Banctotal</td><td>SaaS monoempresa</td><td class="r">17.173</td><td class="r">18.375</td><td class="r">19.662</td><td class="r">55.210</td></tr>
-            <tr class="subtotal"><td colspan="2"><strong>Subtotal Finnegans</strong></td><td class="r"><strong>314.817</strong></td><td class="r"><strong>336.854</strong></td><td class="r"><strong>360.434</strong></td><td class="r"><strong>1.012.105</strong></td></tr>
-            <tr class="grp-hdr"><td colspan="6">Otras plataformas</td></tr>
-            <tr><td>Google Workspace</td><td>SaaS bimestral (6 pagos/año)</td><td class="r">145.421</td><td class="r">155.600</td><td class="r">166.492</td><td class="r">467.513</td></tr>
-            <tr><td>Browix</td><td>SaaS por empleados</td><td class="r">84.915</td><td class="r">90.859</td><td class="r">97.219</td><td class="r">272.993</td></tr>
-            <tr><td>Bitrix24</td><td>SaaS Enterprise 250u</td><td class="r">57.485</td><td class="r">61.509</td><td class="r">65.815</td><td class="r">184.809</td></tr>
-            <tr><td>Arion Hospitality</td><td>On-premise Mant. Gold</td><td class="r">3.366</td><td class="r">3.601</td><td class="r">3.853</td><td class="r">10.820</td></tr>
-            <tr><td>SiteMinder Plus</td><td>SaaS suscripción</td><td class="r">2.994</td><td class="r">3.204</td><td class="r">3.428</td><td class="r">9.626</td></tr>
-            <tr><td>Visionaris</td><td>SaaS paquete 10u</td><td class="r">2.864</td><td class="r">3.065</td><td class="r">3.279</td><td class="r">9.208</td></tr>
-            <tr class="grand-total"><td colspan="2"><strong>TOTAL GRUPO</strong></td><td class="r"><strong>611.862</strong></td><td class="r"><strong>654.692</strong></td><td class="r"><strong>700.520</strong></td><td class="r"><strong>1.967.074</strong></td></tr>
-          </tbody>
+          <tbody id="tcoTabla3Body"></tbody>
         </table>
       </div>
-      <p class="tco-note">Incremento del 7% anual aplicado al inicio de cada año. GWS: 6 pagos bimestrales/año con el 7% aplicado al monto bimestral.</p>
+      <p class="tco-note" id="tco3Nota"></p>
     </div>
-
-    <!-- ── PANEL 4: FLUJO DE FONDOS MENSUAL ────────────────────────────── -->
 
   </section>
 
@@ -864,132 +815,261 @@ document.getElementById('presentBtn').addEventListener('click',function(){
   document.getElementById('presentBtn').textContent=presentMode?'Salir de presentación':'Modo presentación';
 });
 
-// ── TCO MODULE ────────────────────────────────────────────────────────────────
+// ── TCO MODULE — carga dinámica desde Google Sheets ─────────────────────────
 (function(){
-  // Tabs
+
+  // ── Config por defecto (fallback si Sheets no responde) ───────────────────
+  var FALLBACK = {
+    config: { tc_bna: 1465, incr_anual: 0.07, periodo: 'Ene 2026 – Dic 2028' },
+    plataformas: [
+      {plataforma:'Finnegans — Espacio Servicio',      proveedor:'Finnegans',     modelo:'SaaS multiempresa',          moneda_orig:'USD', usd_mes:15888.67, usd_anio:190664.04, pct_total:0.312, grupo:'Finnegans', frecuencia:'mensual'},
+      {plataforma:'Finnegans — Espacio La Mantovana',  proveedor:'Finnegans',     modelo:'SaaS multiempresa',          moneda_orig:'USD', usd_mes:7299.00,  usd_anio:87588.00,  pct_total:0.143, grupo:'Finnegans', frecuencia:'mensual'},
+      {plataforma:'Finnegans — Espacio EsmeraldaPlus', proveedor:'Finnegans',     modelo:'SaaS multiempresa',          moneda_orig:'USD', usd_mes:1616.00,  usd_anio:19392.00,  pct_total:0.032, grupo:'Finnegans', frecuencia:'mensual'},
+      {plataforma:'Finnegans — Espacio Banctotal',     proveedor:'Finnegans',     modelo:'SaaS monoempresa',           moneda_orig:'USD', usd_mes:1431.13,  usd_anio:17173.56,  pct_total:0.028, grupo:'Finnegans', frecuencia:'mensual'},
+      {plataforma:'Google Workspace',                  proveedor:'Esourcecapital',modelo:'SaaS bimestral',             moneda_orig:'USD', usd_mes:12118.39, usd_anio:145420.68, pct_total:0.238, grupo:'Otras',     frecuencia:'bimestral'},
+      {plataforma:'Bitrix24',                          proveedor:'Alkem',         modelo:'SaaS Enterprise 250u',       moneda_orig:'USD', usd_mes:4790.40,  usd_anio:57484.80,  pct_total:0.094, grupo:'Otras',     frecuencia:'mensual'},
+      {plataforma:'Browix',                            proveedor:'—',             modelo:'SaaS por empleados',         moneda_orig:'ARS', usd_mes:7076.25,  usd_anio:84915.00,  pct_total:0.139, grupo:'Otras',     frecuencia:'mensual'},
+      {plataforma:'Arion Hospitality Solution',        proveedor:'Criterio Inf.', modelo:'On-premise Mant. Gold',      moneda_orig:'ARS', usd_mes:280.49,   usd_anio:3365.88,   pct_total:0.006, grupo:'Otras',     frecuencia:'mensual'},
+      {plataforma:'SiteMinder Plus',                   proveedor:'SiteMinder',    modelo:'SaaS suscripción mensual',   moneda_orig:'USD', usd_mes:249.50,   usd_anio:2994.00,   pct_total:0.005, grupo:'Otras',     frecuencia:'mensual'},
+      {plataforma:'Visionaris',                        proveedor:'Visionaris',    modelo:'SaaS paquete 10u',           moneda_orig:'ARS', usd_mes:238.70,   usd_anio:2864.40,   pct_total:0.005, grupo:'Otras',     frecuencia:'mensual'},
+    ]
+  };
+
+  var tcoData = null;   // se llena al cargar desde Sheets
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
   document.querySelectorAll('.tco-tab').forEach(function(tab){
-    tab.addEventListener('click',function(){
-      document.querySelectorAll('.tco-tab').forEach(function(t){t.classList.remove('active');});
-      document.querySelectorAll('.tco-panel').forEach(function(p){p.classList.remove('active');});
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.tco-tab').forEach(function(t){ t.classList.remove('active'); });
+      document.querySelectorAll('.tco-panel').forEach(function(p){ p.classList.remove('active'); p.style.display='none'; });
       tab.classList.add('active');
-      document.getElementById(tab.getAttribute('data-panel')).classList.add('active');
+      var panel = document.getElementById(tab.getAttribute('data-panel'));
+      panel.classList.add('active');
+      panel.style.display = 'block';
     });
   });
 
-  // ── FLUJO DE FONDOS ──────────────────────────────────────────────────────
-  var TC   = 1465;
-  var INCR = 0.07;
-  var MES  = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  var YEARS = [2026,2027,2028];
-  var YR_CLS = ['','ff-year-sep','ff-year-sep'];
-
-  var plats = [
-    {name:'Finnegans — Esp. Servicio',     base:15888.67, gws:false, grp:true,  cls:''},
-    {name:'Finnegans — Esp. La Mantovana', base:7299.00,  gws:false, grp:false, cls:''},
-    {name:'Finnegans — Esp. EsmeraldaPlus',base:1616.00,  gws:false, grp:false, cls:''},
-    {name:'Finnegans — Esp. Banctotal',    base:1431.13,  gws:false, grp:false, cls:''},
-    {name:'Bitrix24',                       base:4790.40,  gws:false, grp:false, cls:''},
-    {name:'Browix',                         base:Math.round(10366700.41/TC*100)/100, gws:false, grp:false, cls:''},
-    {name:'Arion Hospitality',              base:Math.round(410919.60/TC*100)/100,   gws:false, grp:false, cls:''},
-    {name:'SiteMinder Plus',               base:249.50,   gws:false, grp:false, cls:''},
-    {name:'Visionaris',                    base:Math.round(349690/TC*100)/100,       gws:false, grp:false, cls:''},
-    {name:'Google Workspace',              base:24236.78, gws:true,  grp:false, cls:'gws'}
-  ];
-
-  var ffBuilt = false;
-  function buildFF(){
-    if(ffBuilt) return;
-    ffBuilt = true;
-    var wrap = document.getElementById('ffTableWrap');
-
-    // Calcular valores
-    var cols = []; // {label, year, month, yrIdx}
-    YEARS.forEach(function(y,yi){
-      MES.forEach(function(m,mi){
-        cols.push({label:m+'-'+String(y).slice(2), year:y, month:mi+1, yrIdx:yi});
-      });
-    });
-
-    // Build HTML
-    var html = '<table class="ff-table"><thead>';
-
-    // Fila de años
-    html += '<tr><th class="plat"></th>';
-    YEARS.forEach(function(y,yi){
-      var cls = yi===0?'yr':'yr yr-'+y;
-      html += '<th colspan="12" class="'+cls+' '+(yi>0?'ff-year-sep':'')+'">' + y + '</th>';
-    });
-    html += '<th class="r" style="background:#f5f5f5;min-width:80px;">Total</th></tr>';
-
-    // Fila de meses
-    html += '<tr><th class="plat">Plataforma</th>';
-    cols.forEach(function(c,ci){
-      var sep = (ci>0 && c.month===1) ? ' ff-year-sep' : '';
-      html += '<th class="'+(c.yrIdx===1?'has-val-27':c.yrIdx===2?'has-val-28':'')+sep+'" style="min-width:52px;">'+c.label+'</th>';
-    });
-    html += '<th class="r" style="background:#f5f5f5;">3 años</th></tr>';
-    html += '</thead><tbody>';
-
-    // Separador Finnegans
-    html += '<tr class="ff-grp"><td class="plat-cell">Finnegans ERP</td>';
-    cols.forEach(function(){ html += '<td></td>'; });
-    html += '<td></td></tr>';
-
-    // Filas de plataformas
-    plats.forEach(function(p, pi){
-      // Separador antes de otras plataformas
-      if(pi === 4){
-        html += '<tr class="ff-grp"><td class="plat-cell">Otras plataformas</td>';
-        cols.forEach(function(){ html += '<td></td>'; });
-        html += '<td></td></tr>';
-      }
-
-      var rowTotal = 0;
-      html += '<tr><td class="plat-cell">'+p.name+'</td>';
-      cols.forEach(function(c, ci){
-        var sep = (ci>0 && c.month===1) ? ' ff-year-sep' : '';
-        var factor = Math.pow(1+INCR, c.yrIdx);
-        var val = 0;
-        var hasVal = false;
-        if(p.gws){
-          if(c.month % 2 === 1){ val = Math.round(p.base*factor*100)/100; hasVal=true; }
-        } else {
-          val = Math.round(p.base*factor*100)/100; hasVal=true;
-        }
-        rowTotal += val;
-        var yrCls = c.yrIdx===1?'has-val-27':c.yrIdx===2?'has-val-28':'has-val';
-        if(!hasVal){
-          html += '<td class="zero'+sep+'">—</td>';
-        } else {
-          html += '<td class="'+yrCls+sep+'">'+fmtN(val)+'</td>';
-        }
-      });
-      html += '<td class="r" style="font-weight:600;background:#fafafa;">'+fmtN(rowTotal)+'</td></tr>';
-    });
-
-    // Fila total
-    html += '<tr class="ff-total"><td class="plat-cell">TOTAL MENSUAL (USD)</td>';
-    var grandTotal = 0;
-    cols.forEach(function(c, ci){
-      var sep = (ci>0 && c.month===1) ? ' ff-year-sep' : '';
-      var factor = Math.pow(1+INCR, c.yrIdx);
-      var tot = plats.reduce(function(s,p){
-        if(p.gws) return s + (c.month%2===1 ? Math.round(p.base*factor*100)/100 : 0);
-        return s + Math.round(p.base*factor*100)/100;
-      },0);
-      grandTotal += tot;
-      html += '<td class="r'+sep+'" style="font-weight:700;">'+fmtN(Math.round(tot))+'</td>';
-    });
-    html += '<td class="r" style="font-weight:700;">'+fmtN(Math.round(grandTotal))+'</td></tr>';
-
-    html += '</tbody></table>';
-    wrap.innerHTML = html;
+  // ── Cargar datos ──────────────────────────────────────────────────────────
+  async function loadTCO(){
+    try {
+      var res  = await fetch(API_URL + '?action=getTCO');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var json = await res.json();
+      if (!json.ok) throw new Error(json.error || 'Error en Sheets');
+      tcoData = json;
+      document.getElementById('tcoError').style.display = 'none';
+    } catch(e) {
+      tcoData = FALLBACK;
+      document.getElementById('tcoError').style.display = 'block';
+    }
+    renderTCO();
   }
 
-  function fmtN(n){
-    if(!n) return '—';
-    return Math.round(n).toLocaleString('es-AR');
+  // ── Render principal ──────────────────────────────────────────────────────
+  function renderTCO(){
+    var plats  = tcoData.plataformas;
+    var cfg    = tcoData.config;
+    var incr   = parseFloat(cfg.incr_anual) || 0.07;
+    var tc     = parseFloat(cfg.tc_bna)     || 1465;
+
+    // Totales
+    var totalMes = plats.reduce(function(s,p){ return s + parseFloat(p.usd_mes||0); }, 0);
+    var totalAno = plats.reduce(function(s,p){ return s + parseFloat(p.usd_anio||0); }, 0);
+    var y1 = totalAno;
+    var y2 = totalAno * (1 + incr);
+    var y3 = totalAno * Math.pow(1 + incr, 2);
+    var tco3 = y1 + y2 + y3;
+    var extra = tco3 - y1 * 3;
+
+    // Chips de cabecera
+    var chipVer = cfg.version || 'v2 · jun-2026';
+    document.getElementById('tcoChipVer').textContent = chipVer;
+    document.getElementById('tcoChipTC').textContent  = 'TC BNA $' + fmtNum(tc, 0);
+
+    // Ocultar loading, mostrar paneles
+    document.getElementById('tcoLoading').style.display = 'none';
+    document.getElementById('tco-resumen').style.display     = 'block';
+    document.getElementById('tco-plataformas').style.display = 'none';
+    document.getElementById('tco-3anios').style.display      = 'none';
+
+    renderResumen(plats, totalMes, totalAno, tco3);
+    renderPlataformas(plats, totalAno);
+    render3Anios(plats, incr, y1, y2, y3, tco3, extra);
   }
+
+  // ── PANEL 1: Resumen ──────────────────────────────────────────────────────
+  function renderResumen(plats, totalMes, totalAno, tco3){
+    var nPlat = plats.length;
+    var mayorGrupo = 'Finnegans';
+    var mayorMes = 0, mayorAno = 0;
+    var grupSums = {};
+    plats.forEach(function(p){
+      var g = p.grupo || 'Otras';
+      grupSums[g] = (grupSums[g]||0) + parseFloat(p.usd_mes||0);
+    });
+    Object.keys(grupSums).forEach(function(g){
+      if(grupSums[g] > mayorMes){ mayorMes = grupSums[g]; mayorGrupo = g; }
+    });
+    var mayorPct = totalMes > 0 ? (mayorMes/totalMes*100).toFixed(1) : 0;
+
+    document.getElementById('tcoKpiRow').innerHTML =
+      kpi('Costo mensual grupo', 'USD ' + fmtNum(totalMes, 0), 'Todas las plataformas') +
+      kpi('Costo anual 2026',    'USD ' + fmtNum(totalAno, 0), 'Base sin incremento') +
+      kpi('TCO 3 años',          'USD ' + fmtNum(tco3, 0),     'Con 7% incremental anual') +
+      kpi('Plataformas',         String(nPlat),                 'En el relevamiento') +
+      kpi('Mayor costo',         mayorPct + '%',                mayorGrupo + ' sobre el total');
+
+    // Barras — agrupar por grupo y mostrar top 5 individualmente
+    var items = plats.slice().sort(function(a,b){ return parseFloat(b.usd_mes||0)-parseFloat(a.usd_mes||0); });
+    var top4 = items.slice(0,4);
+    var restoMes = items.slice(4).reduce(function(s,p){ return s+parseFloat(p.usd_mes||0); },0);
+    var barItems = top4.concat(restoMes > 0 ? [{plataforma:'Resto', usd_mes: restoMes}] : []);
+
+    var barsHtml = barItems.map(function(p){
+      var mes = parseFloat(p.usd_mes||0);
+      var pct = totalMes > 0 ? (mes/totalMes*100).toFixed(1) : 0;
+      var lbl = (p.plataforma||'').replace('Finnegans — ','').replace(' Espacio ','').substring(0,12);
+      return '<div class="bar-row">' +
+        '<span class="bar-lbl">' + lbl + '</span>' +
+        '<div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%"></div></div>' +
+        '<span class="bar-val">USD ' + fmtNum(mes,0) + '</span>' +
+        '<span class="bar-pct">' + pct + '%</span>' +
+        '</div>';
+    }).join('');
+    document.getElementById('tcoBarWrap').innerHTML = barsHtml;
+
+    var cfg = tcoData.config;
+    document.getElementById('tcoNota').innerHTML =
+      'ARS convertidos a USD al TC BNA $' + fmtNum(parseFloat(cfg.tc_bna)||1465, 0) +
+      '. Google Workspace: facturación bimestral. ' +
+      'Fuente: Mapa Aplicativo 2026 · ' + (cfg.periodo||'Ene 2026 – Dic 2028') + '.';
+  }
+
+  // ── PANEL 2: Por plataforma ───────────────────────────────────────────────
+  function renderPlataformas(plats, totalAno){
+    var grupos = {};
+    plats.forEach(function(p){
+      var g = p.grupo || 'Otras';
+      if(!grupos[g]) grupos[g] = [];
+      grupos[g].push(p);
+    });
+
+    var html = '';
+    var subtotMes = {}, subtotAno = {};
+
+    Object.keys(grupos).forEach(function(g){
+      html += '<tr class="grp-hdr"><td colspan="7">' + g + '</td></tr>';
+      var sMes = 0, sAno = 0;
+      grupos[g].forEach(function(p){
+        var mes = parseFloat(p.usd_mes||0);
+        var ano = parseFloat(p.usd_anio||0);
+        var pct = totalAno > 0 ? (ano/totalAno*100).toFixed(1) + '%' : '—';
+        var cls = g === 'Finnegans' ? ' class="finn"' : '';
+        var esBim = (p.frecuencia||'').toLowerCase() === 'bimestral';
+        html += '<tr' + cls + '>' +
+          '<td>' + (p.plataforma||'') + '</td>' +
+          '<td>' + (p.proveedor||'') + '</td>' +
+          '<td>' + (p.modelo||'') + (esBim ? ' *' : '') + '</td>' +
+          '<td><span class="tco-badge">' + (p.moneda_orig||'USD') + '</span></td>' +
+          '<td class="r">' + fmtNum(mes,0) + '</td>' +
+          '<td class="r">' + fmtNum(ano,0) + '</td>' +
+          '<td class="r">' + pct + '</td>' +
+          '</tr>';
+        sMes += mes; sAno += ano;
+      });
+      subtotMes[g] = sMes; subtotAno[g] = sAno;
+      var sPct = totalAno > 0 ? (sAno/totalAno*100).toFixed(1) + '%' : '—';
+      html += '<tr class="subtotal"><td colspan="4"><strong>Subtotal ' + g + '</strong></td>' +
+        '<td class="r"><strong>' + fmtNum(sMes,0) + '</strong></td>' +
+        '<td class="r"><strong>' + fmtNum(sAno,0) + '</strong></td>' +
+        '<td class="r"><strong>' + sPct + '</strong></td></tr>';
+    });
+
+    var totMes = plats.reduce(function(s,p){ return s+parseFloat(p.usd_mes||0); },0);
+    html += '<tr class="grand-total"><td colspan="4"><strong>TOTAL GRUPO</strong></td>' +
+      '<td class="r"><strong>' + fmtNum(totMes,0) + '</strong></td>' +
+      '<td class="r"><strong>' + fmtNum(totalAno,0) + '</strong></td>' +
+      '<td class="r"><strong>100%</strong></td></tr>';
+
+    document.getElementById('tcoTablaPlatBody').innerHTML = html;
+  }
+
+  // ── PANEL 3: Proyección 3 años ────────────────────────────────────────────
+  function render3Anios(plats, incr, y1, y2, y3, tco3, extra){
+    document.getElementById('tco3KpiRow').innerHTML =
+      kpi('Año 1 · 2026', 'USD ' + fmtNum(y1,0), 'Base', '18px') +
+      kpi('Año 2 · 2027', 'USD ' + fmtNum(y2,0), '+' + (incr*100).toFixed(0) + '% sobre base', '18px') +
+      kpi('Año 3 · 2028', 'USD ' + fmtNum(y3,0), '+' + (Math.pow(1+incr,2)*100-100).toFixed(2) + '% sobre base', '18px') +
+      kpi('TCO Total 3 años', 'USD ' + fmtNum(tco3,0), 'Suma de los 3 años', '18px') +
+      kpi('Costo extra vendor', 'USD ' + fmtNum(extra,0), 'vs. precios fijos 3 años', '18px');
+
+    var grupos = {};
+    plats.forEach(function(p){
+      var g = p.grupo || 'Otras';
+      if(!grupos[g]) grupos[g] = [];
+      grupos[g].push(p);
+    });
+
+    var html = '';
+    var stY1={}, stY2={}, stY3={}, stT3={};
+
+    Object.keys(grupos).forEach(function(g){
+      html += '<tr class="grp-hdr"><td colspan="6">' + g + '</td></tr>';
+      var sY1=0,sY2=0,sY3=0,sT3=0;
+      grupos[g].forEach(function(p){
+        var base = parseFloat(p.usd_anio||0);
+        var esBim = (p.frecuencia||'').toLowerCase() === 'bimestral';
+        // GWS: 6 pagos × monto bimestral × factor
+        var montoBim = esBim ? parseFloat(p.usd_mes||0) * 2 : 0;
+        var pY1 = esBim ? montoBim*6 : base;
+        var pY2 = esBim ? montoBim*6*(1+incr) : base*(1+incr);
+        var pY3 = esBim ? montoBim*6*Math.pow(1+incr,2) : base*Math.pow(1+incr,2);
+        var pT3 = pY1+pY2+pY3;
+        var cls = g === 'Finnegans' ? ' class="finn"' : '';
+        html += '<tr' + cls + '><td>' + (p.plataforma||'') + '</td><td>' + (p.modelo||'') + '</td>' +
+          '<td class="r">' + fmtNum(pY1,0) + '</td>' +
+          '<td class="r">' + fmtNum(pY2,0) + '</td>' +
+          '<td class="r">' + fmtNum(pY3,0) + '</td>' +
+          '<td class="r">' + fmtNum(pT3,0) + '</td></tr>';
+        sY1+=pY1; sY2+=pY2; sY3+=pY3; sT3+=pT3;
+      });
+      html += '<tr class="subtotal"><td colspan="2"><strong>Subtotal ' + g + '</strong></td>' +
+        '<td class="r"><strong>' + fmtNum(sY1,0) + '</strong></td>' +
+        '<td class="r"><strong>' + fmtNum(sY2,0) + '</strong></td>' +
+        '<td class="r"><strong>' + fmtNum(sY3,0) + '</strong></td>' +
+        '<td class="r"><strong>' + fmtNum(sT3,0) + '</strong></td></tr>';
+    });
+
+    html += '<tr class="grand-total"><td colspan="2"><strong>TOTAL GRUPO</strong></td>' +
+      '<td class="r"><strong>' + fmtNum(y1,0) + '</strong></td>' +
+      '<td class="r"><strong>' + fmtNum(y2,0) + '</strong></td>' +
+      '<td class="r"><strong>' + fmtNum(y3,0) + '</strong></td>' +
+      '<td class="r"><strong>' + fmtNum(tco3,0) + '</strong></td></tr>';
+
+    document.getElementById('tcoTabla3Body').innerHTML = html;
+    document.getElementById('tco3Nota').textContent =
+      'Incremento del ' + (incr*100).toFixed(0) + '% anual aplicado al inicio de cada año. ' +
+      'GWS: 6 pagos bimestrales/año con el ' + (incr*100).toFixed(0) + '% aplicado al monto bimestral.';
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function kpi(lbl, val, sub, valSize){
+    var sz = valSize ? ' style="font-size:' + valSize + '"' : '';
+    return '<div class="tco-kpi"><p class="lbl">' + lbl + '</p>' +
+           '<p class="val"' + sz + '>' + val + '</p>' +
+           '<p class="sub">' + sub + '</p></div>';
+  }
+
+  function fmtNum(n, dec){
+    if(isNaN(n)) return '—';
+    return parseFloat(n).toLocaleString('es-AR', {
+      minimumFractionDigits: dec||0,
+      maximumFractionDigits: dec||0
+    });
+  }
+
+  // Arrancar
+  loadTCO();
 
 })();
 
