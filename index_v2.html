@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero de Gestión — Dirección de IT</title>
+<style>
+:root{
+  --bg:#fafafa;
+  --card:#ffffff;
+  --border:#e2e2e2;
+  --border-strong:#c6c6c6;
+  --text:#1a1a1a;
+  --text-secondary:#717171;
+  --text-tertiary:#aaaaaa;
+}
+*{box-sizing:border-box; font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;}
+body{margin:0; background:var(--bg); color:var(--text);}
+.wrap{max-width:1280px; margin:0 auto; padding:28px;}
+
+/* MODO PRESENTACION */
+body.present-mode .wrap{padding:20px;}
+body.present-mode .hint{display:none;}
+body.present-mode .btn-add{display:none;}
+body.present-mode .btn-link{display:none;}
+body.present-mode .reset-btn{display:none;}
+body.present-mode input,
+body.present-mode select{pointer-events:none; user-select:none;}
+body.present-mode .priority-controls{display:none;}
+body.present-mode section.card:last-of-type{display:none;}
+body.present-mode .filter-row{display:none;}
+body.present-mode header.top{border-bottom:2px solid var(--border-strong);}
+.present-banner{display:none; background:var(--text); color:#fff; text-align:center; font-size:12px; letter-spacing:.08em; padding:6px; text-transform:uppercase;}
+body.present-mode .present-banner{display:block;}
+
+header.top{display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; border-bottom:1px solid var(--border-strong); padding-bottom:16px; margin-bottom:18px;}
+header.top h1{margin:0; font-size:19px; font-weight:600; letter-spacing:-0.01em;}
+header.top p{margin:4px 0 0; font-size:13px; color:var(--text-secondary);}
+.header-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;}
+.meta{font-size:12px; color:var(--text-secondary); text-align:right;}
+.save-status{font-size:11px; color:var(--text); margin-top:4px; min-height:14px;}
+.reset-btn{font-size:11px; padding:4px 10px; border:1px solid var(--border-strong); background:transparent; color:var(--text-secondary); cursor:pointer;}
+.reset-btn:hover{background:var(--text); color:#fff; border-color:var(--text);}
+.present-btn{font-size:11px; padding:4px 10px; border:1px solid var(--border-strong); background:transparent; color:var(--text-secondary); cursor:pointer; letter-spacing:.03em;}
+.present-btn:hover{background:var(--text); color:#fff; border-color:var(--text);}
+body.present-mode .present-btn{background:var(--text); color:#fff; border-color:var(--text);}
+
+.hint{font-size:12px; color:var(--text-tertiary); margin:0 2px 18px;}
+
+.kpi-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:14px;}
+.kpi-card{background:var(--card); border:1px solid var(--border); padding:14px 16px;}
+.kpi-card .label{font-size:11px; color:var(--text-secondary); margin:0 0 6px; text-transform:uppercase; letter-spacing:.05em;}
+.kpi-card .value{font-size:24px; font-weight:600; margin:0;}
+
+.pillar-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:22px;}
+.pillar-card{background:var(--card); border:1px solid var(--border); padding:10px 14px; cursor:pointer; transition:border-color .15s;}
+.pillar-card:hover{border-color:var(--border-strong);}
+.pillar-card.active{border-color:var(--text); background:var(--text);}
+.pillar-card.active .name{color:#ccc;}
+.pillar-card.active .count{color:#fff;}
+.pillar-card .name{font-size:11px; color:var(--text-secondary); margin:0 0 4px; line-height:1.35;}
+.pillar-card .count{font-size:20px; font-weight:600;}
+
+section.card{background:var(--card); border:1px solid var(--border); padding:18px 20px; margin-bottom:20px;}
+section.card h2{margin:0 0 14px; font-size:14px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--text);}
+
+.filter-row{display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;}
+.filter-row span{font-size:12px; color:var(--text-secondary);}
+.filter-clear{font-size:11px; color:var(--text-secondary); cursor:pointer; border:none; background:none; padding:0; text-decoration:underline;}
+.filter-clear:hover{color:var(--text);}
+
+.table-scroll{overflow-x:auto;}
+table{width:100%; border-collapse:collapse; table-layout:fixed; min-width:720px;}
+th{font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-secondary); text-align:left; padding:8px 6px; border-bottom:1px solid var(--border-strong); font-weight:500;}
+td{padding:8px 6px; border-bottom:1px solid var(--border); vertical-align:middle; overflow:hidden;}
+tr.hidden-row{display:none;}
+input[type=text], input[type=date], input[type=number], select{width:100%; min-width:0; border:none; border-bottom:1px solid transparent; background:transparent; padding:4px 2px; font-size:12.5px; color:var(--text); border-radius:0; text-overflow:ellipsis;}
+input[type=text]:hover, input[type=date]:hover, input[type=number]:hover, select:hover{border-bottom-color:var(--border-strong);}
+input[type=text]:focus, input[type=date]:focus, input[type=number]:focus, select:focus{outline:none; border-bottom-color:var(--text);}
+input[type=number]{-moz-appearance:textfield;}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+.col-actions{width:32px; text-align:center;}
+
+/* % avance */
+.progress-cell{display:flex; align-items:center; gap:6px;}
+.progress-bar-wrap{flex:1; height:4px; background:var(--border); min-width:30px;}
+.progress-bar-fill{height:4px; background:var(--text); transition:width .2s;}
+.progress-num{font-size:11px; color:var(--text-secondary); width:28px; text-align:right; flex-shrink:0;}
+body.present-mode .progress-num{display:none;}
+body.present-mode input[data-field="progress"]{display:none;}
+
+.priority-cell{display:flex; align-items:center; gap:6px; min-width:0;}
+.priority-num{font-weight:600; width:16px; text-align:center; flex-shrink:0;}
+.priority-controls{display:flex; flex-direction:column; gap:1px; flex-shrink:0;}
+.priority-controls button{border:1px solid var(--border-strong); background:transparent; color:var(--text-secondary); font-size:9px; line-height:1; padding:1px 4px; cursor:pointer;}
+.priority-controls button:hover{background:var(--text); color:#fff; border-color:var(--text);}
+.priority-controls button:disabled{opacity:.3; cursor:default;}
+.priority-controls button:disabled:hover{background:transparent; color:var(--text-secondary);}
+
+.status-cell{display:flex; align-items:center; gap:8px; min-width:0;}
+.status-cell select{flex:1; min-width:0;}
+.ind{display:inline-block; width:10px; height:10px; flex-shrink:0; text-align:center; line-height:9px; font-size:9px; font-weight:700; color:var(--text);}
+.ind-empty{border:1.5px solid var(--text-secondary); border-radius:50%;}
+.ind-filled{background:var(--text); border-radius:50%;}
+.ind-half{border:1.5px solid var(--text-secondary); border-radius:50%; background:linear-gradient(135deg, var(--text) 50%, transparent 50%);}
+.ind-block{background:var(--text); border-radius:1px;}
+.ind-check{border:1px solid var(--text); border-radius:50%;}
+.ind-dashed{border:1.5px dashed var(--text-tertiary); border-radius:50%;}
+
+.btn{border:1px solid var(--border-strong); background:transparent; color:var(--text); padding:6px 14px; font-size:12px; letter-spacing:.03em; cursor:pointer; border-radius:0;}
+.btn:hover{background:var(--text); color:#fff; border-color:var(--text);}
+.btn-link{border:none; background:none; color:var(--text-tertiary); cursor:pointer; font-size:14px; padding:4px; line-height:1;}
+.btn-link:hover{color:var(--text);}
+.btn-add{margin-top:10px;}
+
+.three-col{display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px;}
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+@media (max-width:900px){.three-col{grid-template-columns:1fr 1fr;}}
+@media (max-width:620px){.three-col,.two-col{grid-template-columns:1fr;}}
+
+.list-item{display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border);}
+.list-item:last-of-type{border-bottom:none;}
+.list-item input[type=checkbox]{flex-shrink:0; accent-color:var(--text);}
+.list-item input[type=text]{flex:1; border-bottom:none;}
+.list-item input[type=text]:hover, .list-item input[type=text]:focus{border-bottom:1px solid var(--border-strong);}
+.list-item.done input[type=text]{text-decoration:line-through; color:var(--text-tertiary);}
+
+.legend{display:flex; flex-wrap:wrap; gap:18px;}
+.legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary);}
+.footnote{font-size:11px; color:var(--text-tertiary); margin-top:12px;}
+
+#summaryText{width:100%; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; line-height:1.5; border:1px solid var(--border); padding:10px; resize:vertical; background:#fcfcfc; color:var(--text);}
+
+/* Print / modo presentacion */
+@media print{
+  .btn-add,.btn-link,.priority-controls,.reset-btn,.present-btn,.filter-row,.hint,.present-banner{display:none!important;}
+  body{background:#fff;}
+  .wrap{padding:10px;}
+}
+
+/* ── TCO SECTION ────────────────────────────────────────────────────────────── */
+.tco-tabs{display:flex; gap:0; border-bottom:1px solid var(--border-strong); margin-bottom:18px; flex-wrap:wrap;}
+.tco-tab{font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-secondary);
+  padding:7px 16px; cursor:pointer; border:none; background:none; border-bottom:2px solid transparent;
+  margin-bottom:-1px; transition:color .15s, border-color .15s;}
+.tco-tab:hover{color:var(--text);}
+.tco-tab.active{color:var(--text); border-bottom-color:var(--text); font-weight:600;}
+.tco-panel{display:none;}
+.tco-panel.active{display:block;}
+
+.tco-kpi-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:18px;}
+.tco-kpi{border:1px solid var(--border); padding:12px 14px; background:var(--card);}
+.tco-kpi .lbl{font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-secondary); margin:0 0 5px;}
+.tco-kpi .val{font-size:22px; font-weight:600; margin:0; letter-spacing:-0.02em;}
+.tco-kpi .sub{font-size:11px; color:var(--text-secondary); margin:3px 0 0;}
+
+.tco-table-wrap{overflow-x:auto; margin-bottom:6px;}
+.tco-table{width:100%; border-collapse:collapse; font-size:12px; min-width:600px;}
+.tco-table th{font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-secondary);
+  text-align:left; padding:7px 8px; border-bottom:1px solid var(--border-strong); font-weight:500; white-space:nowrap;}
+.tco-table th.r{text-align:right;}
+.tco-table td{padding:7px 8px; border-bottom:1px solid var(--border); vertical-align:middle;}
+.tco-table td.r{text-align:right; font-variant-numeric:tabular-nums;}
+.tco-table tr.grp-hdr td{background:var(--text); color:#fff; font-size:10px; text-transform:uppercase;
+  letter-spacing:.05em; font-weight:600; padding:5px 8px;}
+.tco-table tr.subtotal td{font-weight:600; border-top:1px solid var(--border-strong);
+  border-bottom:1px solid var(--border-strong); background:#f5f5f5;}
+.tco-table tr.grand-total td{font-weight:700; font-size:13px; border-top:2px solid var(--text);
+  background:var(--card);}
+.tco-table tr.finn td{background:#f0f4fb;}
+.tco-table tr.gws td{background:#f5f0fb;}
+.tco-badge{display:inline-block; font-size:10px; padding:2px 6px; border:1px solid var(--border-strong);
+  color:var(--text-secondary); letter-spacing:.03em;}
+
+/* Flujo de fondos */
+.ff-scroll{overflow-x:auto; border:1px solid var(--border);}
+.ff-table{border-collapse:collapse; font-size:11px; white-space:nowrap;}
+.ff-table th{font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-secondary);
+  text-align:right; padding:6px 8px; border-bottom:1px solid var(--border-strong);
+  border-right:1px solid var(--border); font-weight:500; background:var(--card); position:sticky;}
+.ff-table th.plat{text-align:left; min-width:180px; position:sticky; left:0; z-index:2; background:var(--card);}
+.ff-table th.yr{text-align:center; background:#f0f4fb; color:var(--text); font-weight:600; border-bottom:1px solid var(--border-strong);}
+.ff-table th.yr-27{background:#f0f5ec;}
+.ff-table th.yr-28{background:#fdf0ec;}
+.ff-table td{padding:5px 8px; border-bottom:1px solid var(--border); border-right:1px solid var(--border);
+  text-align:right; font-variant-numeric:tabular-nums;}
+.ff-table td.plat-cell{text-align:left; font-weight:500; position:sticky; left:0; background:var(--card);
+  z-index:1; border-right:1px solid var(--border-strong); min-width:180px; max-width:200px;
+  white-space:normal; line-height:1.3;}
+.ff-table td.zero{background:#f0f0f0; color:#bbb;}
+.ff-table td.has-val{background:#fff;}
+.ff-table td.has-val-27{background:#f8fdf5;}
+.ff-table td.has-val-28{background:#fff8f5;}
+.ff-table tr.ff-grp{background:var(--text);}
+.ff-table tr.ff-grp td{color:#fff; font-size:10px; text-transform:uppercase; letter-spacing:.04em;
+  font-weight:600; padding:4px 8px; border:none;}
+.ff-table tr.ff-grp td.plat-cell{background:var(--text); color:#fff;}
+.ff-table tr.ff-total td{font-weight:700; background:#fafafa; border-top:2px solid var(--text);}
+.ff-table tr.ff-total td.plat-cell{background:#fafafa;}
+.ff-year-sep{border-left:2px solid var(--border-strong)!important;}
+
+.tco-note{font-size:11px; color:var(--text-tertiary); margin-top:10px; line-height:1.5;}
+.tco-chip{display:inline-block; font-size:10px; border:1px solid var(--border); padding:1px 5px;
+  color:var(--text-secondary); margin-right:4px; vertical-align:middle;}
+
+/* 3 años barras */
+.bar-wrap{display:flex; flex-direction:column; gap:10px;}
+.bar-row{display:flex; align-items:center; gap:10px;}
+.bar-lbl{font-size:11px; color:var(--text-secondary); width:70px; flex-shrink:0; text-align:right;}
+.bar-outer{flex:1; height:20px; background:var(--border); position:relative;}
+.bar-inner{height:100%; background:var(--text); transition:width .4s;}
+.bar-val{font-size:11px; font-weight:600; width:90px; flex-shrink:0;}
+.bar-pct{font-size:10px; color:var(--text-secondary); width:36px; flex-shrink:0;}
+
+@media(max-width:620px){.tco-kpi-row{grid-template-columns:1fr 1fr;} .bar-lbl{width:44px; font-size:10px;}}
+</style>
+</head>
+<body>
+<div class="present-banner">Modo presentación — solo lectura</div>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <h1>Tablero de gestión — Dirección de IT</h1>
+      <p>Portfolio de proyectos y temas prioritarios del Grupo</p>
+    </div>
+    <div class="header-actions">
+      <button class="present-btn" id="presentBtn">Modo presentación</button>
+      <div class="meta">
+        <div>Última actualización: <span id="updatedAt">—</span></div>
+        <div class="save-status" id="saveStatus"></div>
+        <button class="reset-btn" id="resetBtn">Restablecer plantilla</button>
+      </div>
+    </div>
+  </header>
+
+  <p class="hint">Todos los campos son editables y se guardan automáticamente en Google Sheets.</p>
+
+  <div class="kpi-row" id="kpiRow"></div>
+  <div class="pillar-row" id="pillarRow"></div>
+
+  <section class="card">
+    <h2>Portfolio de proyectos</h2>
+    <div class="filter-row">
+      <span>Filtrar por pilar:</span>
+      <span id="filterLabel" style="font-size:12px;color:var(--text);font-weight:500;">Todos</span>
+      <button class="filter-clear" id="filterClear" style="display:none;">Limpiar filtro</button>
+    </div>
+    <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:6%">Prior.</th>
+          <th style="width:14%">Proyecto</th>
+          <th style="width:14%">Pilar</th>
+          <th style="width:13%">Estado</th>
+          <th style="width:9%">Responsable</th>
+          <th style="width:18%">Foco / próximo hito</th>
+          <th style="width:9%">Fecha hito</th>
+          <th style="width:11%">% Avance</th>
+          <th class="col-actions"></th>
+        </tr>
+      </thead>
+      <tbody id="projectsBody"></tbody>
+    </table>
+    </div>
+    <button class="btn btn-add" id="addProject">+ Agregar proyecto</button>
+  </section>
+
+  <div class="three-col">
+    <section class="card">
+      <h2>Temas prioritarios en curso</h2>
+      <div id="topicsList"></div>
+      <button class="btn btn-add" id="addTopic">+ Agregar tema</button>
+    </section>
+    <section class="card">
+      <h2>Riesgos identificados</h2>
+      <div id="risksList"></div>
+      <button class="btn btn-add" id="addRisk">+ Agregar riesgo</button>
+    </section>
+    <section class="card">
+      <h2>Pendientes de decisión — Dirección</h2>
+      <div id="decisionsList"></div>
+      <button class="btn btn-add" id="addDecision">+ Agregar pendiente</button>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Resumen para copiar</h2>
+    <button class="btn" id="generateSummaryBtn">Generar resumen</button>
+    <textarea id="summaryText" rows="14" readonly style="display:none; margin-top:12px;"></textarea>
+  </section>
+
+  <section class="card">
+    <h2>Referencias de estado</h2>
+    <div class="legend" id="legend"></div>
+    <p class="footnote">Los datos se guardan en Google Sheets. "Restablecer plantilla" reemplaza todo por los valores iniciales. Hacé click en una tarjeta de pilar para filtrar la tabla.</p>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       TCO — COSTOS DE LICENCIAS IT GRUPO
+       Fuente: Mapa Aplicativo 2026 v2 · TC BNA $1.465 · 18/06/2026
+       ══════════════════════════════════════════════════════════════════════ -->
+  <section class="card" id="tcoSection">
+    <h2>TCO — Costos de licencias IT · Grupo <span class="tco-chip">v2 · jun-2026</span><span class="tco-chip">TC BNA $1.465</span><span class="tco-chip">7% incr. anual</span></h2>
+
+    <div class="tco-tabs">
+      <button class="tco-tab active" data-panel="tco-resumen">Resumen</button>
+      <button class="tco-tab" data-panel="tco-plataformas">Por plataforma</button>
+      <button class="tco-tab" data-panel="tco-3anios">Proyección 3 años</button>
+    </div>
+
+    <!-- ── PANEL 1: RESUMEN ─────────────────────────────────────────────── -->
+    <div class="tco-panel active" id="tco-resumen">
+      <div class="tco-kpi-row">
+        <div class="tco-kpi"><p class="lbl">Costo mensual grupo</p><p class="val">USD 50.989</p><p class="sub">Todas las plataformas</p></div>
+        <div class="tco-kpi"><p class="lbl">Costo anual 2026</p><p class="val">USD 611.862</p><p class="sub">Base sin incremento</p></div>
+        <div class="tco-kpi"><p class="lbl">TCO 3 años</p><p class="val">USD 1.967.076</p><p class="sub">Con 7% incremental anual</p></div>
+        <div class="tco-kpi"><p class="lbl">Plataformas</p><p class="val">7</p><p class="sub">10 empresas en Finnegans</p></div>
+        <div class="tco-kpi"><p class="lbl">Mayor costo</p><p class="val">51,4%</p><p class="sub">Finnegans sobre el total</p></div>
+      </div>
+
+      <div class="bar-wrap" style="margin-bottom:14px;">
+        <div class="bar-row"><span class="bar-lbl">Finnegans</span><div class="bar-outer"><div class="bar-inner" style="width:51.4%"></div></div><span class="bar-val">USD 26.235</span><span class="bar-pct">51,4%</span></div>
+        <div class="bar-row"><span class="bar-lbl">GWS</span><div class="bar-outer"><div class="bar-inner" style="width:23.8%"></div></div><span class="bar-val">USD 12.118</span><span class="bar-pct">23,8%</span></div>
+        <div class="bar-row"><span class="bar-lbl">Browix</span><div class="bar-outer"><div class="bar-inner" style="width:13.9%"></div></div><span class="bar-val">USD 7.076</span><span class="bar-pct">13,9%</span></div>
+        <div class="bar-row"><span class="bar-lbl">Bitrix24</span><div class="bar-outer"><div class="bar-inner" style="width:9.4%"></div></div><span class="bar-val">USD 4.790</span><span class="bar-pct">9,4%</span></div>
+        <div class="bar-row"><span class="bar-lbl">Resto</span><div class="bar-outer"><div class="bar-inner" style="width:1.5%"></div></div><span class="bar-val">USD 768</span><span class="bar-pct">1,5%</span></div>
+      </div>
+
+      <p class="tco-note">
+        ARS convertidos a USD al TC BNA venta $1.465 (18/06/2026). Google Workspace: facturación bimestral (USD 24.237 c/2 meses).
+        Fuente: Mapa Aplicativo 2026 v2. <strong>Consolidación La Mantovana S.A ejecutada en v2</strong> — ahorro USD 75.744/año materializado.
+      </p>
+    </div>
+
+    <!-- ── PANEL 2: POR PLATAFORMA ─────────────────────────────────────── -->
+    <div class="tco-panel" id="tco-plataformas">
+      <div class="tco-table-wrap">
+        <table class="tco-table">
+          <thead>
+            <tr>
+              <th style="width:28%">Plataforma / Espacio</th>
+              <th style="width:14%">Proveedor</th>
+              <th style="width:16%">Modelo</th>
+              <th style="width:10%">Moneda</th>
+              <th class="r" style="width:12%">USD/mes</th>
+              <th class="r" style="width:12%">USD/año</th>
+              <th class="r" style="width:8%">% total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="grp-hdr"><td colspan="7">Finnegans ERP — por espacio de licenciamiento</td></tr>
+            <tr class="finn"><td>Espacio Servicio</td><td>Finnegans</td><td>SaaS multiempresa</td><td><span class="tco-badge">USD</span></td><td class="r">15.889</td><td class="r">190.664</td><td class="r">31,2%</td></tr>
+            <tr class="finn"><td>Espacio La Mantovana</td><td>Finnegans</td><td>SaaS multiempresa</td><td><span class="tco-badge">USD</span></td><td class="r">7.299</td><td class="r">87.588</td><td class="r">14,3%</td></tr>
+            <tr class="finn"><td>Espacio EsmeraldaPlus</td><td>Finnegans</td><td>SaaS multiempresa</td><td><span class="tco-badge">USD</span></td><td class="r">1.616</td><td class="r">19.392</td><td class="r">3,2%</td></tr>
+            <tr class="finn"><td>Espacio Banctotal</td><td>Finnegans</td><td>SaaS monoempresa</td><td><span class="tco-badge">USD</span></td><td class="r">1.431</td><td class="r">17.173</td><td class="r">2,8%</td></tr>
+            <tr class="subtotal"><td colspan="4"><strong>Subtotal Finnegans</strong></td><td class="r"><strong>26.235</strong></td><td class="r"><strong>314.820</strong></td><td class="r"><strong>51,4%</strong></td></tr>
+            <tr class="grp-hdr"><td colspan="7">Otras plataformas</td></tr>
+            <tr><td>Google Workspace</td><td>Esourcecapital</td><td>SaaS bimestral</td><td><span class="tco-badge">USD</span></td><td class="r">12.118 *</td><td class="r">145.421</td><td class="r">23,8%</td></tr>
+            <tr><td>Browix</td><td>—</td><td>SaaS por empleados</td><td><span class="tco-badge">ARS</span></td><td class="r">7.076</td><td class="r">84.915</td><td class="r">13,9%</td></tr>
+            <tr><td>Bitrix24</td><td>Alkem</td><td>SaaS Enterprise 250u</td><td><span class="tco-badge">USD</span></td><td class="r">4.790</td><td class="r">57.480</td><td class="r">9,4%</td></tr>
+            <tr><td>Arion Hospitality</td><td>Criterio Inf.</td><td>On-premise Mant. Gold</td><td><span class="tco-badge">ARS</span></td><td class="r">280</td><td class="r">3.366</td><td class="r">0,6%</td></tr>
+            <tr><td>SiteMinder Plus</td><td>SiteMinder</td><td>SaaS suscripción</td><td><span class="tco-badge">USD</span></td><td class="r">250</td><td class="r">2.994</td><td class="r">0,5%</td></tr>
+            <tr><td>Visionaris</td><td>Visionaris</td><td>SaaS paquete 10u</td><td><span class="tco-badge">ARS</span></td><td class="r">239</td><td class="r">2.868</td><td class="r">0,5%</td></tr>
+            <tr class="subtotal"><td colspan="4"><strong>Subtotal otras</strong></td><td class="r"><strong>24.753</strong></td><td class="r"><strong>297.044</strong></td><td class="r"><strong>48,6%</strong></td></tr>
+            <tr class="grand-total"><td colspan="4"><strong>TOTAL GRUPO</strong></td><td class="r"><strong>50.989</strong></td><td class="r"><strong>611.862</strong></td><td class="r"><strong>100%</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="tco-note">* Google Workspace mostrado como mensual equivalente (pago real: USD 24.237 c/2 meses). ARS → USD al TC BNA $1.465.</p>
+    </div>
+
+    <!-- ── PANEL 3: PROYECCIÓN 3 AÑOS ──────────────────────────────────── -->
+    <div class="tco-panel" id="tco-3anios">
+      <div class="tco-kpi-row" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); margin-bottom:20px;">
+        <div class="tco-kpi"><p class="lbl">Año 1 · 2026</p><p class="val" style="font-size:18px;">USD 611.862</p><p class="sub">Base</p></div>
+        <div class="tco-kpi"><p class="lbl">Año 2 · 2027</p><p class="val" style="font-size:18px;">USD 654.693</p><p class="sub">+7% sobre base</p></div>
+        <div class="tco-kpi"><p class="lbl">Año 3 · 2028</p><p class="val" style="font-size:18px;">USD 700.521</p><p class="sub">+14,49% sobre base</p></div>
+        <div class="tco-kpi"><p class="lbl">TCO Total 3 años</p><p class="val" style="font-size:18px;">USD 1.967.076</p><p class="sub">Suma de los 3 años</p></div>
+        <div class="tco-kpi"><p class="lbl">Costo extra por inflación vendor</p><p class="val" style="font-size:18px;">USD 131.550</p><p class="sub">vs. costo fijo 3 años</p></div>
+      </div>
+
+      <div class="tco-table-wrap">
+        <table class="tco-table">
+          <thead>
+            <tr>
+              <th style="width:30%">Plataforma / Espacio</th>
+              <th style="width:18%">Modelo</th>
+              <th class="r" style="width:13%">2026 (USD)</th>
+              <th class="r" style="width:13%">2027 (USD)</th>
+              <th class="r" style="width:13%">2028 (USD)</th>
+              <th class="r" style="width:13%">Total 3 años</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="grp-hdr"><td colspan="6">Finnegans ERP</td></tr>
+            <tr class="finn"><td>Espacio Servicio</td><td>SaaS multiempresa</td><td class="r">190.664</td><td class="r">204.010</td><td class="r">218.291</td><td class="r">612.965</td></tr>
+            <tr class="finn"><td>Espacio La Mantovana</td><td>SaaS multiempresa</td><td class="r">87.588</td><td class="r">93.719</td><td class="r">100.279</td><td class="r">281.586</td></tr>
+            <tr class="finn"><td>Espacio EsmeraldaPlus</td><td>SaaS multiempresa</td><td class="r">19.392</td><td class="r">20.750</td><td class="r">22.202</td><td class="r">62.344</td></tr>
+            <tr class="finn"><td>Espacio Banctotal</td><td>SaaS monoempresa</td><td class="r">17.173</td><td class="r">18.375</td><td class="r">19.662</td><td class="r">55.210</td></tr>
+            <tr class="subtotal"><td colspan="2"><strong>Subtotal Finnegans</strong></td><td class="r"><strong>314.817</strong></td><td class="r"><strong>336.854</strong></td><td class="r"><strong>360.434</strong></td><td class="r"><strong>1.012.105</strong></td></tr>
+            <tr class="grp-hdr"><td colspan="6">Otras plataformas</td></tr>
+            <tr><td>Google Workspace</td><td>SaaS bimestral (6 pagos/año)</td><td class="r">145.421</td><td class="r">155.600</td><td class="r">166.492</td><td class="r">467.513</td></tr>
+            <tr><td>Browix</td><td>SaaS por empleados</td><td class="r">84.915</td><td class="r">90.859</td><td class="r">97.219</td><td class="r">272.993</td></tr>
+            <tr><td>Bitrix24</td><td>SaaS Enterprise 250u</td><td class="r">57.485</td><td class="r">61.509</td><td class="r">65.815</td><td class="r">184.809</td></tr>
+            <tr><td>Arion Hospitality</td><td>On-premise Mant. Gold</td><td class="r">3.366</td><td class="r">3.601</td><td class="r">3.853</td><td class="r">10.820</td></tr>
+            <tr><td>SiteMinder Plus</td><td>SaaS suscripción</td><td class="r">2.994</td><td class="r">3.204</td><td class="r">3.428</td><td class="r">9.626</td></tr>
+            <tr><td>Visionaris</td><td>SaaS paquete 10u</td><td class="r">2.864</td><td class="r">3.065</td><td class="r">3.279</td><td class="r">9.208</td></tr>
+            <tr class="grand-total"><td colspan="2"><strong>TOTAL GRUPO</strong></td><td class="r"><strong>611.862</strong></td><td class="r"><strong>654.692</strong></td><td class="r"><strong>700.520</strong></td><td class="r"><strong>1.967.074</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="tco-note">Incremento del 7% anual aplicado al inicio de cada año. GWS: 6 pagos bimestrales/año con el 7% aplicado al monto bimestral.</p>
+    </div>
+
+    <!-- ── PANEL 4: FLUJO DE FONDOS MENSUAL ────────────────────────────── -->
+
+  </section>
+
+</div>
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxsKZQ1TmoptdGm-n3_l0xGv6IBkUnb4xwIjOw4Bg0zJV5Fs81jamGa5ZcrYcgr1MZ4/exec';
+
+const PILLARS = {
+  p1: 'P1 · Infraestructura y seguridad',
+  p2: 'P2 · Sistemas y datos',
+  p3: 'P3 · Automatización e IA',
+  p4: 'P4 · Innovación y transformación',
+  na: 'Sin asignar'
+};
+
+const STATUSES = {
+  'a-definir':  {label:'A definir',            ind:'ind-empty'},
+  'en-curso':   {label:'En curso',              ind:'ind-filled'},
+  'atencion':   {label:'En ajuste / Atención',  ind:'ind-half'},
+  'bloqueado':  {label:'Bloqueado',             ind:'ind-block'},
+  'completado': {label:'Completado',            ind:'ind-check'},
+  'pendiente':  {label:'Pendiente definición',  ind:'ind-dashed'}
+};
+
+let data = null;
+let activePillarFilter = null;
+let presentMode = false;
+
+function normalizeProject(p){
+  let ms = p.milestone || '';
+  if(ms && ms.length > 10) ms = ms.substring(0,10);
+  let prog = parseInt(p.progress, 10);
+  if(isNaN(prog) || prog < 0) prog = 0;
+  if(prog > 100) prog = 100;
+  return {
+    id: String(p.id || ('p'+Date.now()+Math.floor(Math.random()*1000))),
+    name: p.name || '',
+    pillar: PILLARS[p.pillar] ? p.pillar : 'na',
+    status: STATUSES[p.status] ? p.status : 'a-definir',
+    owner: p.owner || '',
+    focus: p.focus || '',
+    milestone: ms,
+    progress: prog
+  };
+}
+
+function normalizeItem(prefix){
+  return function(it){
+    return {
+      id: String(it.id || (prefix+Date.now()+Math.floor(Math.random()*1000))),
+      text: it.text || '',
+      done: it.done===true || it.done==='TRUE' || it.done==='true'
+    };
+  };
+}
+
+function defaultData(){
+  return {
+    projects:[
+      {id:'p01',name:'PMS Hoteles',pillar:'p2',status:'en-curso',owner:'Equipo Sistemas',focus:'Definir alcance funcional con Hotelería',milestone:'2026-07-10',progress:30},
+      {id:'p02',name:'Flota PVP',pillar:'p2',status:'a-definir',owner:'',focus:'Relevar sistema de gestión actual',milestone:'',progress:0},
+      {id:'p03',name:'Integración POS (Hiopos)',pillar:'p2',status:'en-curso',owner:'Equipo Sistemas',focus:'Pruebas de integración con ERP',milestone:'2026-06-30',progress:65},
+      {id:'p04',name:'BI corporativo (Power BI)',pillar:'p2',status:'atencion',owner:'Equipo Datos',focus:'Definir modelo de datos para tableros',milestone:'2026-07-20',progress:20},
+      {id:'p05',name:'Rollout Finnegans (ERP)',pillar:'p2',status:'atencion',owner:'Equipo Sistemas',focus:'Ajuste post-implementación',milestone:'2026-06-25',progress:80},
+      {id:'p06',name:'Separación lógica de red',pillar:'p1',status:'bloqueado',owner:'Proveedor infraestructura',focus:'Pendiente aprobación de presupuesto',milestone:'',progress:10},
+      {id:'p07',name:'Presupuesto unificado de IT',pillar:'p1',status:'en-curso',owner:'Dirección IT',focus:'Consolidar costos por empresa',milestone:'2026-06-20',progress:50},
+      {id:'p08',name:'Selección proveedor soporte L1/L2',pillar:'p1',status:'a-definir',owner:'',focus:'Definir pliego de requerimientos',milestone:'',progress:0},
+      {id:'p09',name:'P09 · A identificar',pillar:'na',status:'pendiente',owner:'',focus:'Definir alcance',milestone:'',progress:0},
+      {id:'p10',name:'P10 · A identificar',pillar:'na',status:'pendiente',owner:'',focus:'Definir alcance',milestone:'',progress:0}
+    ],
+    topics:[
+      {id:'t1',text:'Reunión con proveedor Transbox (infraestructura)',done:true},
+      {id:'t2',text:'Aprobación de volúmenes de equipamiento (notebooks, PCs, monitores, wifi, servidores, cámaras)',done:false},
+      {id:'t3',text:'Revisión de licencias de Google Workspace',done:true},
+      {id:'t4',text:'Proceso licitatorio 100% en Bitrix con datos explotables',done:false},
+      {id:'t5',text:'Seguridad de activos físicos / control de accesos',done:false},
+      {id:'t6',text:'Quick wins transversales identificados',done:false},
+      {id:'t7',text:'Diagnóstico de gasto en IT y armado de presupuesto',done:false}
+    ],
+    risks:[
+      {id:'r1',text:'Retraso en rollout de Finnegans por ajustes contables no cerrados',done:false},
+      {id:'r2',text:'Dependencia de proveedor único para infraestructura de red',done:false},
+      {id:'r3',text:'Falta de definición de dueño funcional en proyectos de automatización',done:false}
+    ],
+    decisions:[
+      {id:'d1',text:'Validar priorización del backlog (10 proyectos)',done:true},
+      {id:'d2',text:'Aprobar incorporación: IT Business Automation Lead',done:false},
+      {id:'d3',text:'Aprobar compras de equipamiento (volúmenes grandes)',done:false},
+      {id:'d4',text:'Definir alcance de P09 y P10',done:false},
+      {id:'d5',text:'Presupuesto IT consolidado (Run / Grow / Transform)',done:false}
+    ],
+    meta:{updatedAt: new Date().toISOString()}
+  };
+}
+
+function escapeAttr(str){
+  return String(str==null?'':str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function fmtDate(iso){
+  if(!iso) return '—';
+  return new Date(iso).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function fmtDateOnly(d){
+  if(!d) return 'sin fecha';
+  const p=d.split('-'); if(p.length!==3) return d;
+  return p[2]+'/'+p[1]+'/'+p[0];
+}
+function indHTML(k){
+  const ind=STATUSES[k]?STATUSES[k].ind:'ind-empty';
+  return '<span class="ind '+ind+'" data-ind>'+(ind==='ind-check'?'\u2713':'')+'</span>';
+}
+function setSaveStatus(msg){
+  const el=document.getElementById('saveStatus');
+  el.textContent=msg;
+  setTimeout(function(){if(el.textContent===msg)el.textContent='';},2500);
+}
+function renderTimestamp(){ document.getElementById('updatedAt').textContent=fmtDate(data.meta.updatedAt); }
+
+function renderKPIs(){
+  const total=data.projects.length;
+  const counts={};
+  data.projects.forEach(function(p){counts[p.status]=(counts[p.status]||0)+1;});
+  const topicsActive=data.topics.filter(function(t){return !t.done;}).length;
+  const decPending=data.decisions.filter(function(d){return !d.done;}).length;
+  const risksOpen=data.risks.filter(function(r){return !r.done;}).length;
+  const sinDef=(counts['a-definir']||0)+(counts['pendiente']||0);
+  const avgProg=total?Math.round(data.projects.reduce(function(s,p){return s+(p.progress||0);},0)/total):0;
+  document.getElementById('kpiRow').innerHTML=
+    '<div class="kpi-card"><p class="label">Proyectos en portfolio</p><p class="value">'+total+'</p></div>'+
+    '<div class="kpi-card"><p class="label">Avance promedio</p><p class="value">'+avgProg+'%</p></div>'+
+    '<div class="kpi-card"><p class="label">Temas activos</p><p class="value">'+topicsActive+' / '+data.topics.length+'</p></div>'+
+    '<div class="kpi-card"><p class="label">Riesgos abiertos</p><p class="value">'+risksOpen+' / '+data.risks.length+'</p></div>'+
+    '<div class="kpi-card"><p class="label">Decisiones pendientes</p><p class="value">'+decPending+' / '+data.decisions.length+'</p></div>'+
+    '<div class="kpi-card"><p class="label">Estados sin definir</p><p class="value">'+sinDef+' / '+total+'</p></div>';
+}
+
+function renderPillars(){
+  const order=['p1','p2','p3','p4','na'];
+  const counts={p1:0,p2:0,p3:0,p4:0,na:0};
+  data.projects.forEach(function(p){counts[p.pillar]=(counts[p.pillar]||0)+1;});
+  document.getElementById('pillarRow').innerHTML=order.map(function(k){
+    const active=activePillarFilter===k;
+    return '<div class="pillar-card'+(active?' active':'')+'" data-pillar="'+k+'">'+
+      '<p class="name">'+PILLARS[k]+'</p><p class="count">'+counts[k]+'</p></div>';
+  }).join('');
+  document.getElementById('pillarRow').querySelectorAll('.pillar-card').forEach(function(card){
+    card.addEventListener('click',function(){
+      const p=card.getAttribute('data-pillar');
+      activePillarFilter=(activePillarFilter===p)?null:p;
+      applyFilter();
+    });
+  });
+}
+
+function applyFilter(){
+  renderPillars();
+  const label=document.getElementById('filterLabel');
+  const clear=document.getElementById('filterClear');
+  if(activePillarFilter){
+    label.textContent=PILLARS[activePillarFilter];
+    clear.style.display='inline';
+  } else {
+    label.textContent='Todos';
+    clear.style.display='none';
+  }
+  document.querySelectorAll('#projectsBody tr').forEach(function(tr){
+    if(!activePillarFilter){ tr.classList.remove('hidden-row'); return; }
+    const proj=data.projects.find(function(p){return p.id===tr.getAttribute('data-id');});
+    tr.classList.toggle('hidden-row', !proj || proj.pillar!==activePillarFilter);
+  });
+}
+
+function progressCellHTML(progress){
+  const pct=Math.max(0,Math.min(100,progress||0));
+  return '<div class="progress-cell">'+
+    '<input type="number" data-field="progress" min="0" max="100" value="'+pct+'" style="width:36px;">'+
+    '<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:'+pct+'%"></div></div>'+
+    '<span class="progress-num">'+pct+'%</span>'+
+  '</div>';
+}
+
+function selectPillarHTML(current){
+  return '<select data-field="pillar">'+Object.keys(PILLARS).map(function(k){
+    return '<option value="'+k+'" '+(k===current?'selected':'')+'>'+PILLARS[k]+'</option>';
+  }).join('')+'</select>';
+}
+function selectStatusHTML(current){
+  return '<div class="status-cell">'+indHTML(current)+
+    '<select data-field="status">'+Object.keys(STATUSES).map(function(k){
+      return '<option value="'+k+'" '+(k===current?'selected':'')+'>'+STATUSES[k].label+'</option>';
+    }).join('')+'</select></div>';
+}
+
+function renderProjects(){
+  const body=document.getElementById('projectsBody');
+  const total=data.projects.length;
+  body.innerHTML=data.projects.map(function(p,idx){
+    const hidden=activePillarFilter && p.pillar!==activePillarFilter?' hidden-row':'';
+    return '<tr data-id="'+p.id+'" class="'+hidden+'">'+
+      '<td><div class="priority-cell"><span class="priority-num">'+(idx+1)+'</span>'+
+        '<div class="priority-controls">'+
+          '<button data-action="move-up" '+(idx===0?'disabled':'')+' aria-label="Subir">\u25B2</button>'+
+          '<button data-action="move-down" '+(idx===total-1?'disabled':'')+' aria-label="Bajar">\u25BC</button>'+
+        '</div></div></td>'+
+      '<td><input type="text" data-field="name" value="'+escapeAttr(p.name)+'"></td>'+
+      '<td>'+selectPillarHTML(p.pillar)+'</td>'+
+      '<td>'+selectStatusHTML(p.status)+'</td>'+
+      '<td><input type="text" data-field="owner" value="'+escapeAttr(p.owner)+'" placeholder="—"></td>'+
+      '<td><input type="text" data-field="focus" value="'+escapeAttr(p.focus)+'"></td>'+
+      '<td><input type="date" data-field="milestone" value="'+escapeAttr(p.milestone)+'"></td>'+
+      '<td>'+progressCellHTML(p.progress)+'</td>'+
+      '<td class="col-actions"><button class="btn-link" data-action="delete-project" aria-label="Eliminar">&times;</button></td>'+
+    '</tr>';
+  }).join('');
+
+  body.querySelectorAll('input,select').forEach(function(el){
+    el.addEventListener('change',onProjectFieldChange);
+    if(el.getAttribute('data-field')==='progress'){
+      el.addEventListener('input',onProgressInput);
+    }
+  });
+  body.querySelectorAll('[data-action="delete-project"]').forEach(function(btn){
+    btn.addEventListener('click',onDeleteProject);
+  });
+  body.querySelectorAll('[data-action="move-up"]').forEach(function(btn){
+    btn.addEventListener('click',function(e){onMoveProject(e,-1);});
+  });
+  body.querySelectorAll('[data-action="move-down"]').forEach(function(btn){
+    btn.addEventListener('click',function(e){onMoveProject(e,1);});
+  });
+}
+
+function onProgressInput(e){
+  const tr=e.target.closest('tr');
+  const id=tr.getAttribute('data-id');
+  const proj=data.projects.find(function(p){return p.id===id;});
+  let v=parseInt(e.target.value,10);
+  if(isNaN(v)||v<0) v=0; if(v>100) v=100;
+  proj.progress=v;
+  const fill=tr.querySelector('.progress-bar-fill');
+  const label=tr.querySelector('.progress-num');
+  if(fill) fill.style.width=v+'%';
+  if(label) label.textContent=v+'%';
+}
+
+function onMoveProject(e,dir){
+  const tr=e.target.closest('tr');
+  const id=tr.getAttribute('data-id');
+  const idx=data.projects.findIndex(function(p){return p.id===id;});
+  const ni=idx+dir;
+  if(ni<0||ni>=data.projects.length) return;
+  const tmp=data.projects[idx]; data.projects[idx]=data.projects[ni]; data.projects[ni]=tmp;
+  renderProjects(); persist();
+}
+
+function onProjectFieldChange(e){
+  const tr=e.target.closest('tr');
+  const id=tr.getAttribute('data-id');
+  const field=e.target.getAttribute('data-field');
+  const proj=data.projects.find(function(p){return p.id===id;});
+  if(field==='progress'){
+    let v=parseInt(e.target.value,10);
+    if(isNaN(v)||v<0) v=0; if(v>100) v=100;
+    proj.progress=v;
+  } else {
+    proj[field]=e.target.value;
+  }
+  if(field==='status'){
+    const ind=STATUSES[proj.status].ind;
+    const indEl=e.target.closest('.status-cell').querySelector('.ind');
+    indEl.className='ind '+ind;
+    indEl.textContent=ind==='ind-check'?'\u2713':'';
+  }
+  if(field==='pillar'){renderPillars(); applyFilter();}
+  persist();
+}
+
+function onDeleteProject(e){
+  const tr=e.target.closest('tr');
+  const id=tr.getAttribute('data-id');
+  data.projects=data.projects.filter(function(p){return p.id!==id;});
+  renderProjects(); renderPillars(); persist();
+}
+
+function renderListSection(containerId, key){
+  const el=document.getElementById(containerId);
+  el.innerHTML=data[key].map(function(item){
+    return '<div class="list-item '+(item.done?'done':'')+'" data-id="'+item.id+'">'+
+      '<input type="checkbox" data-field="done" '+(item.done?'checked':'')+'>'+
+      '<input type="text" data-field="text" value="'+escapeAttr(item.text)+'">'+
+      '<button class="btn-link" data-action="delete" aria-label="Eliminar">&times;</button>'+
+    '</div>';
+  }).join('');
+  el.querySelectorAll('input').forEach(function(inp){
+    inp.addEventListener('change',function(e){onListChange(e,key);});
+  });
+  el.querySelectorAll('[data-action="delete"]').forEach(function(btn){
+    btn.addEventListener('click',function(e){onListDelete(e,key);});
+  });
+}
+
+function onListChange(e,key){
+  const item=e.target.closest('.list-item');
+  const id=item.getAttribute('data-id');
+  const obj=data[key].find(function(x){return x.id===id;});
+  const field=e.target.getAttribute('data-field');
+  if(field==='done'){obj.done=e.target.checked; item.classList.toggle('done',obj.done);}
+  else{obj.text=e.target.value;}
+  persist();
+}
+function onListDelete(e,key){
+  const item=e.target.closest('.list-item');
+  const id=item.getAttribute('data-id');
+  data[key]=data[key].filter(function(x){return x.id!==id;});
+  renderListSection(
+    key==='topics'?'topicsList':key==='risks'?'risksList':'decisionsList',
+    key
+  );
+  persist();
+}
+
+function renderLegend(){
+  document.getElementById('legend').innerHTML=Object.keys(STATUSES).map(function(k){
+    return '<span class="legend-item">'+indHTML(k)+STATUSES[k].label+'</span>';
+  }).join('');
+}
+
+function generateSummary(){
+  const lines=[];
+  lines.push('TABLERO DE GESTION IT — '+fmtDate(data.meta.updatedAt));
+  lines.push('');
+  lines.push('PROYECTOS EN PORTFOLIO ('+data.projects.length+')');
+  data.projects.forEach(function(p,i){
+    lines.push('- [P'+(i+1)+'] '+p.name+' ['+PILLARS[p.pillar]+']');
+    lines.push('    Estado: '+STATUSES[p.status].label+' | Avance: '+(p.progress||0)+'% | Responsable: '+(p.owner||'sin asignar')+' | Hito: '+fmtDateOnly(p.milestone));
+    lines.push('    Foco: '+(p.focus||'—'));
+  });
+  lines.push('');
+  const ta=data.topics.filter(function(t){return !t.done;});
+  lines.push('TEMAS EN CURSO ('+ta.length+' activos de '+data.topics.length+')');
+  data.topics.forEach(function(t){lines.push('- ['+(t.done?'Resuelto':'En curso')+'] '+t.text);});
+  lines.push('');
+  const ra=data.risks.filter(function(r){return !r.done;});
+  lines.push('RIESGOS ('+ra.length+' abiertos de '+data.risks.length+')');
+  data.risks.forEach(function(r){lines.push('- ['+(r.done?'Mitigado':'Abierto')+'] '+r.text);});
+  lines.push('');
+  const da=data.decisions.filter(function(d){return !d.done;});
+  lines.push('PENDIENTES DE DECISION — DIRECCION ('+da.length+' de '+data.decisions.length+')');
+  data.decisions.forEach(function(d){lines.push('- ['+(d.done?'Resuelto':'Pendiente')+'] '+d.text);});
+  return lines.join('\n');
+}
+
+function copySummary(){
+  const ta=document.getElementById('summaryText');
+  ta.focus(); ta.select();
+  let ok=false;
+  try{ok=document.execCommand('copy');}catch(e){}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ta.value).then(function(){setSaveStatus('Resumen copiado al portapapeles');})
+    .catch(function(){setSaveStatus(ok?'Resumen copiado al portapapeles':'Seleccionado: Ctrl+C para copiar');});
+  } else {setSaveStatus(ok?'Resumen copiado al portapapeles':'Seleccionado: Ctrl+C para copiar');}
+}
+
+async function saveToSheet(){
+  data.meta.updatedAt=new Date().toISOString();
+  try{
+    const url=API_URL+'?action=save&payload='+encodeURIComponent(JSON.stringify(data));
+    const res=await fetch(url);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return true;
+  }catch(e){return false;}
+}
+async function persist(){
+  renderKPIs();
+  const ok=await saveToSheet();
+  renderTimestamp();
+  setSaveStatus(ok?'Cambios guardados en Google Sheets':'No se pudo guardar en Google Sheets');
+}
+
+function renderAll(){
+  renderLegend(); renderProjects();
+  renderListSection('topicsList','topics');
+  renderListSection('risksList','risks');
+  renderListSection('decisionsList','decisions');
+  renderKPIs(); renderPillars(); renderTimestamp();
+}
+
+async function init(){
+  try{
+    const res=await fetch(API_URL);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const json=await res.json();
+    if(json.projects&&json.projects.length){
+      data={
+        projects:json.projects.map(normalizeProject),
+        topics:(json.topics||[]).map(normalizeItem('t')),
+        risks:(json.risks||[]).map(normalizeItem('r')),
+        decisions:(json.decisions||[]).map(normalizeItem('d')),
+        meta:{updatedAt:(json.meta&&json.meta.updatedAt)||new Date().toISOString()}
+      };
+      setSaveStatus('Datos cargados desde Google Sheets');
+    } else {
+      data=defaultData();
+      setSaveStatus('Planilla vacía: cargando datos iniciales...');
+      await saveToSheet();
+      setSaveStatus('Datos iniciales cargados en Google Sheets');
+    }
+  }catch(e){
+    data=defaultData();
+    setSaveStatus('Sin conexión con Google Sheets (mostrando datos locales)');
+  }
+  renderAll();
+}
+
+document.getElementById('addProject').addEventListener('click',function(){
+  data.projects.push({id:'p'+Date.now(),name:'Nuevo proyecto',pillar:'na',status:'a-definir',owner:'',focus:'',milestone:'',progress:0});
+  renderProjects(); renderPillars(); persist();
+});
+document.getElementById('addTopic').addEventListener('click',function(){
+  data.topics.push({id:'t'+Date.now(),text:'Nuevo tema',done:false});
+  renderListSection('topicsList','topics'); persist();
+});
+document.getElementById('addRisk').addEventListener('click',function(){
+  data.risks.push({id:'r'+Date.now(),text:'Nuevo riesgo',done:false});
+  renderListSection('risksList','risks'); persist();
+});
+document.getElementById('addDecision').addEventListener('click',function(){
+  data.decisions.push({id:'d'+Date.now(),text:'Nuevo pendiente',done:false});
+  renderListSection('decisionsList','decisions'); persist();
+});
+document.getElementById('generateSummaryBtn').addEventListener('click',function(){
+  const ta=document.getElementById('summaryText');
+  ta.value=generateSummary(); ta.style.display='block'; copySummary();
+});
+document.getElementById('resetBtn').addEventListener('click',function(){
+  if(confirm('Esto reemplaza todos los datos actuales por la plantilla inicial. ¿Confirmás?')){
+    data=defaultData(); activePillarFilter=null; renderAll(); persist();
+  }
+});
+document.getElementById('filterClear').addEventListener('click',function(){
+  activePillarFilter=null; applyFilter();
+});
+document.getElementById('presentBtn').addEventListener('click',function(){
+  presentMode=!presentMode;
+  document.body.classList.toggle('present-mode',presentMode);
+  document.getElementById('presentBtn').textContent=presentMode?'Salir de presentación':'Modo presentación';
+});
+
+// ── TCO MODULE ────────────────────────────────────────────────────────────────
+(function(){
+  // Tabs
+  document.querySelectorAll('.tco-tab').forEach(function(tab){
+    tab.addEventListener('click',function(){
+      document.querySelectorAll('.tco-tab').forEach(function(t){t.classList.remove('active');});
+      document.querySelectorAll('.tco-panel').forEach(function(p){p.classList.remove('active');});
+      tab.classList.add('active');
+      document.getElementById(tab.getAttribute('data-panel')).classList.add('active');
+    });
+  });
+
+  // ── FLUJO DE FONDOS ──────────────────────────────────────────────────────
+  var TC   = 1465;
+  var INCR = 0.07;
+  var MES  = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var YEARS = [2026,2027,2028];
+  var YR_CLS = ['','ff-year-sep','ff-year-sep'];
+
+  var plats = [
+    {name:'Finnegans — Esp. Servicio',     base:15888.67, gws:false, grp:true,  cls:''},
+    {name:'Finnegans — Esp. La Mantovana', base:7299.00,  gws:false, grp:false, cls:''},
+    {name:'Finnegans — Esp. EsmeraldaPlus',base:1616.00,  gws:false, grp:false, cls:''},
+    {name:'Finnegans — Esp. Banctotal',    base:1431.13,  gws:false, grp:false, cls:''},
+    {name:'Bitrix24',                       base:4790.40,  gws:false, grp:false, cls:''},
+    {name:'Browix',                         base:Math.round(10366700.41/TC*100)/100, gws:false, grp:false, cls:''},
+    {name:'Arion Hospitality',              base:Math.round(410919.60/TC*100)/100,   gws:false, grp:false, cls:''},
+    {name:'SiteMinder Plus',               base:249.50,   gws:false, grp:false, cls:''},
+    {name:'Visionaris',                    base:Math.round(349690/TC*100)/100,       gws:false, grp:false, cls:''},
+    {name:'Google Workspace',              base:24236.78, gws:true,  grp:false, cls:'gws'}
+  ];
+
+  var ffBuilt = false;
+  function buildFF(){
+    if(ffBuilt) return;
+    ffBuilt = true;
+    var wrap = document.getElementById('ffTableWrap');
+
+    // Calcular valores
+    var cols = []; // {label, year, month, yrIdx}
+    YEARS.forEach(function(y,yi){
+      MES.forEach(function(m,mi){
+        cols.push({label:m+'-'+String(y).slice(2), year:y, month:mi+1, yrIdx:yi});
+      });
+    });
+
+    // Build HTML
+    var html = '<table class="ff-table"><thead>';
+
+    // Fila de años
+    html += '<tr><th class="plat"></th>';
+    YEARS.forEach(function(y,yi){
+      var cls = yi===0?'yr':'yr yr-'+y;
+      html += '<th colspan="12" class="'+cls+' '+(yi>0?'ff-year-sep':'')+'">' + y + '</th>';
+    });
+    html += '<th class="r" style="background:#f5f5f5;min-width:80px;">Total</th></tr>';
+
+    // Fila de meses
+    html += '<tr><th class="plat">Plataforma</th>';
+    cols.forEach(function(c,ci){
+      var sep = (ci>0 && c.month===1) ? ' ff-year-sep' : '';
+      html += '<th class="'+(c.yrIdx===1?'has-val-27':c.yrIdx===2?'has-val-28':'')+sep+'" style="min-width:52px;">'+c.label+'</th>';
+    });
+    html += '<th class="r" style="background:#f5f5f5;">3 años</th></tr>';
+    html += '</thead><tbody>';
+
+    // Separador Finnegans
+    html += '<tr class="ff-grp"><td class="plat-cell">Finnegans ERP</td>';
+    cols.forEach(function(){ html += '<td></td>'; });
+    html += '<td></td></tr>';
+
+    // Filas de plataformas
+    plats.forEach(function(p, pi){
+      // Separador antes de otras plataformas
+      if(pi === 4){
+        html += '<tr class="ff-grp"><td class="plat-cell">Otras plataformas</td>';
+        cols.forEach(function(){ html += '<td></td>'; });
+        html += '<td></td></tr>';
+      }
+
+      var rowTotal = 0;
+      html += '<tr><td class="plat-cell">'+p.name+'</td>';
+      cols.forEach(function(c, ci){
+        var sep = (ci>0 && c.month===1) ? ' ff-year-sep' : '';
+        var factor = Math.pow(1+INCR, c.yrIdx);
+        var val = 0;
+        var hasVal = false;
+        if(p.gws){
+          if(c.month % 2 === 1){ val = Math.round(p.base*factor*100)/100; hasVal=true; }
+        } else {
+          val = Math.round(p.base*factor*100)/100; hasVal=true;
+        }
+        rowTotal += val;
+        var yrCls = c.yrIdx===1?'has-val-27':c.yrIdx===2?'has-val-28':'has-val';
+        if(!hasVal){
+          html += '<td class="zero'+sep+'">—</td>';
+        } else {
+          html += '<td class="'+yrCls+sep+'">'+fmtN(val)+'</td>';
+        }
+      });
+      html += '<td class="r" style="font-weight:600;background:#fafafa;">'+fmtN(rowTotal)+'</td></tr>';
+    });
+
+    // Fila total
+    html += '<tr class="ff-total"><td class="plat-cell">TOTAL MENSUAL (USD)</td>';
+    var grandTotal = 0;
+    cols.forEach(function(c, ci){
+      var sep = (ci>0 && c.month===1) ? ' ff-year-sep' : '';
+      var factor = Math.pow(1+INCR, c.yrIdx);
+      var tot = plats.reduce(function(s,p){
+        if(p.gws) return s + (c.month%2===1 ? Math.round(p.base*factor*100)/100 : 0);
+        return s + Math.round(p.base*factor*100)/100;
+      },0);
+      grandTotal += tot;
+      html += '<td class="r'+sep+'" style="font-weight:700;">'+fmtN(Math.round(tot))+'</td>';
+    });
+    html += '<td class="r" style="font-weight:700;">'+fmtN(Math.round(grandTotal))+'</td></tr>';
+
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+
+  function fmtN(n){
+    if(!n) return '—';
+    return Math.round(n).toLocaleString('es-AR');
+  }
+
+})();
+
+init();
+</script>
+</body>
+</html>
